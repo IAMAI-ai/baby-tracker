@@ -24,19 +24,18 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 
 /**
- * 强化版保存记录：
- * 强制将 familyId 转为字符串，确保与索引匹配
+ * 保存记录：强制将 familyId 转为字符串
  */
 async function saveRecord(type, familyId) {
     try {
-        const idStr = String(familyId); // 关键修复：确保 ID 永远是字符串类型
+        const idStr = String(familyId); 
         await addDoc(collection(db, "baby_logs"), {
             type: type,
             familyId: idStr,
-            timestamp: serverTimestamp(), // 数据库时间
+            timestamp: serverTimestamp(),
             createdAt: serverTimestamp()
         });
-        console.log(`成功记录: ${type} (家庭暗号: ${idStr})`);
+        console.log(`成功记录: ${type}`);
         return true;
     } catch (e) {
         console.error("保存失败:", e);
@@ -45,53 +44,67 @@ async function saveRecord(type, familyId) {
 }
 
 /**
- * 强化版实时监听：
- * 增加错误捕获，并在数据返回时检查时间戳，防止新数据被漏掉
+ * 实时监听：适配手机端渲染
  */
 function listenToLogs(familyId, callback) {
-    const idStr = String(familyId); // 确保查询类型一致
+    const idStr = String(familyId); 
     const q = query(
         collection(db, "baby_logs"), 
         where("familyId", "==", idStr), 
         orderBy("timestamp", "desc"), 
-        limit(50) // 增加到50条，防止由于排序问题导致的显示不全
+        limit(50) 
     );
 
-    // 返回监听器
     return onSnapshot(q, (snapshot) => {
         const logs = [];
         snapshot.forEach((doc) => {
             const data = doc.data();
             
-            // 关键优化：如果 timestamp 还没从服务器返回（pending），先使用本地时间占位显示
-            // 这样点击按钮后列表会立刻反应，而不会等待索引筛选后再显示
+            // 解决服务器时间同步延迟导致的本地显示问题
             const date = data.timestamp ? data.timestamp.toDate() : new Date();
             
+            // 格式化：14:30
             const timeStr = date.getHours().toString().padStart(2, '0') + ":" + 
                            date.getMinutes().toString().padStart(2, '0');
-            const fullTime = new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+            
+            // 格式化：2024-03-20T14:30 (datetime-local 必须是这种格式才能在手机上回显)
+            const year = date.getFullYear();
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const day = date.getDate().toString().padStart(2, '0');
+            const hours = date.getHours().toString().padStart(2, '0');
+            const minutes = date.getMinutes().toString().padStart(2, '0');
+            const fullTime = `${year}-${month}-${day}T${hours}:${minutes}`;
             
             logs.push({ id: doc.id, ...data, timeStr, fullTime });
         });
         
-        console.log(`[实时监听] 捕获到 ${logs.length} 条记录`);
+        console.log(`[实时监听] 更新了 ${logs.length} 条数据`);
         callback(logs);
     }, (error) => {
-        // 如果索引失效或权限有问题，这里会直接报错
-        console.error("Firebase 监听器报错:", error.message);
-        if (error.message.includes("index")) {
-            alert("数据库索引正在配置中，请稍等 1-2 分钟后再试。");
-        }
+        console.error("Firebase 监听报错:", error.message);
     });
 }
 
-async function updateRecord(id, newTime) {
+/**
+ * 更新记录：修复手机端时间戳转换
+ */
+async function updateRecord(id, newTimeStr) {
     try {
-        await updateDoc(doc(db, "baby_logs", id), { timestamp: new Date(newTime) });
+        // 将字符串 "2024-03-20T14:30" 转换为 JavaScript Date 对象
+        const newDate = new Date(newTimeStr);
+        await updateDoc(doc(db, "baby_logs", id), { 
+            timestamp: newDate 
+        });
         return true;
-    } catch (e) { return false; }
+    } catch (e) { 
+        console.error("更新失败:", e);
+        return false; 
+    }
 }
 
+/**
+ * 删除记录
+ */
 async function deleteRecord(id) {
     if(confirm("确定要删除这条记录吗？")) {
         try {
@@ -101,6 +114,9 @@ async function deleteRecord(id) {
     }
 }
 
+/**
+ * 上传头像
+ */
 async function uploadAvatar(file, familyId) {
     try {
         const storageRef = ref(storage, `baby_info/${familyId}_avatar.jpg`);
@@ -111,7 +127,7 @@ async function uploadAvatar(file, familyId) {
     } catch (e) { return null; }
 }
 
-// 导出到全局
+// 导出到全局以便 index.html 调用
 window.saveRecord = saveRecord;
 window.listenToLogs = listenToLogs;
 window.updateRecord = updateRecord;
