@@ -165,18 +165,25 @@
                                 listEl.innerHTML = '<li style="text-align:center;color:#ddd;padding:20px;">此暗号下暂无记录</li>';
                                 return;
                             }
-                            listEl.innerHTML = logs.map(log => `
-                                <li class="log-item">
-                                    <div class="log-info">
-                                        <b>${log.type}</b>
-                                        <span>${log.timeStr}</span>
-                                    </div>
-                                    <div class="log-actions">
-                                        <button class="btn-edit" onclick="editLog('${log.id}', '${log.fullTime}', '${log.type}')">⏰</button>
-                                        <button class="btn-del" onclick="window.deleteRecord('${log.id}')">🗑️</button>
-                                    </div>
-                                </li>
-                            `).join('');
+                            // 请在 index.html 约 130 行左右找到这里进行替换
+listEl.innerHTML = logs.map(log => `
+    <li class="log-item">
+        <div class="log-info">
+            <b>${log.type}</b>
+            <span>${log.timeStr}</span>
+        </div>
+        <div class="log-actions">
+            <div style="position: relative; width: 32px; height: 32px;">
+                <button class="btn-edit" style="width:100%; height:100%; padding:0; margin:0;">⏰</button>
+                <input type="datetime-local" 
+                       value="${log.fullTime}"
+                       style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;"
+                       onchange="if(this.value) window.updateRecord('${log.id}', this.value)">
+            </div>
+            <button class="btn-del" onclick="window.deleteRecord('${log.id}')">🗑️</button>
+        </div>
+    </li>
+`).join('');
                         });
                     }
                 }, 300);
