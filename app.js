@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { 
     getFirestore, collection, addDoc, serverTimestamp, query, orderBy, 
-    limit, onSnapshot, doc, updateDoc, deleteDoc, where 
+    limit, onSnapshot, doc, updateDoc, deleteDoc, where, getDocs 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { 
     getStorage, ref, uploadBytes, getDownloadURL 
@@ -59,15 +59,11 @@ function listenToLogs(familyId, callback) {
         const logs = [];
         snapshot.forEach((doc) => {
             const data = doc.data();
-            
-            // 解决服务器时间同步延迟导致的本地显示问题
             const date = data.timestamp ? data.timestamp.toDate() : new Date();
             
-            // 格式化：14:30
             const timeStr = date.getHours().toString().padStart(2, '0') + ":" + 
                            date.getMinutes().toString().padStart(2, '0');
             
-            // 格式化：2024-03-20T14:30 (datetime-local 必须是这种格式才能在手机上回显)
             const year = date.getFullYear();
             const month = (date.getMonth() + 1).toString().padStart(2, '0');
             const day = date.getDate().toString().padStart(2, '0');
@@ -86,11 +82,10 @@ function listenToLogs(familyId, callback) {
 }
 
 /**
- * 更新记录：修复手机端时间戳转换
+ * 更新记录
  */
 async function updateRecord(id, newTimeStr) {
     try {
-        // 将字符串 "2024-03-20T14:30" 转换为 JavaScript Date 对象
         const newDate = new Date(newTimeStr);
         await updateDoc(doc(db, "baby_logs", id), { 
             timestamp: newDate 
@@ -103,7 +98,7 @@ async function updateRecord(id, newTimeStr) {
 }
 
 /**
- * 删除记录
+ * 删除单条记录
  */
 async function deleteRecord(id) {
     if(confirm("确定要删除这条记录吗？")) {
@@ -111,6 +106,29 @@ async function deleteRecord(id) {
             await deleteDoc(doc(db, "baby_logs", id));
             return true;
         } catch (e) { return false; }
+    }
+}
+
+/**
+ * 一键清空当前家庭的所有记录
+ */
+async function clearAllRecords(familyId) {
+    try {
+        const idStr = String(familyId);
+        // 获取所有属于该家庭的记录
+        const q = query(collection(db, "baby_logs"), where("familyId", "==", idStr));
+        const querySnapshot = await getDocs(q);
+        
+        // 执行批量删除
+        const deletePromises = querySnapshot.docs.map(document => 
+            deleteDoc(doc(db, "baby_logs", document.id))
+        );
+        
+        await Promise.all(deletePromises);
+        return true;
+    } catch (e) {
+        console.error("清空失败:", e);
+        return false;
     }
 }
 
@@ -127,9 +145,10 @@ async function uploadAvatar(file, familyId) {
     } catch (e) { return null; }
 }
 
-// 导出到全局以便 index.html 调用
+// 导出到全局
 window.saveRecord = saveRecord;
 window.listenToLogs = listenToLogs;
 window.updateRecord = updateRecord;
 window.deleteRecord = deleteRecord;
+window.clearAllRecords = clearAllRecords; // 新增导出
 window.uploadAvatar = uploadAvatar;
