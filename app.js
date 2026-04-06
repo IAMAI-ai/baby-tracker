@@ -24,7 +24,7 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 
 /**
- * 保存记录：强制将 familyId 转为字符串
+ * 保存记录
  */
 async function saveRecord(type, familyId) {
     try {
@@ -35,7 +35,6 @@ async function saveRecord(type, familyId) {
             timestamp: serverTimestamp(),
             createdAt: serverTimestamp()
         });
-        console.log(`成功记录: ${type}`);
         return true;
     } catch (e) {
         console.error("保存失败:", e);
@@ -44,7 +43,7 @@ async function saveRecord(type, familyId) {
 }
 
 /**
- * 实时监听：适配手机端渲染并显示完整日期
+ * 实时监听：增加前端强制排序逻辑
  */
 function listenToLogs(familyId, callback) {
     const idStr = String(familyId); 
@@ -59,6 +58,7 @@ function listenToLogs(familyId, callback) {
         const logs = [];
         snapshot.forEach((doc) => {
             const data = doc.data();
+            // 如果 timestamp 为空（通常是刚写入还未同步），使用当前本地时间
             const date = data.timestamp ? data.timestamp.toDate() : new Date();
             
             const year = date.getFullYear();
@@ -67,16 +67,18 @@ function listenToLogs(familyId, callback) {
             const hours = date.getHours().toString().padStart(2, '0');
             const minutes = date.getMinutes().toString().padStart(2, '0');
 
-            // 修改点：显示格式改为 年-月-日 时:分
             const timeStr = `${year}-${month}-${day} ${hours}:${minutes}`;
-            
-            // 用于 datetime-local 控件回显的格式 (必须带 T)
             const fullTime = `${year}-${month}-${day}T${hours}:${minutes}`;
             
-            logs.push({ id: doc.id, ...data, timeStr, fullTime });
+            // 将日期对象存入，用于前端排序
+            logs.push({ id: doc.id, ...data, timeStr, fullTime, _dateObj: date });
         });
         
-        console.log(`[实时监听] 更新了 ${logs.length} 条数据`);
+        // 【关键优化】：在返回给页面前，强制按日期对象降序排列
+        // 这样在 updateRecord 修改时间后，列表会立即重排
+        logs.sort((a, b) => b._dateObj - a._dateObj);
+        
+        console.log(`[实时监听] 更新并重排了 ${logs.length} 条数据`);
         callback(logs);
     }, (error) => {
         console.error("Firebase 监听报错:", error.message);
