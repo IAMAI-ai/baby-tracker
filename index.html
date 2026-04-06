@@ -37,7 +37,7 @@
         #log-list { list-style: none; padding: 0; margin: 0; }
         .log-item { background: white; margin-bottom: 10px; padding: 15px; border-radius: 18px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
         .log-info b { display: block; font-size: 0.95rem; margin-bottom: 2px; }
-        .log-info span { font-size: 0.7rem; color: #bbb; letter-spacing: -0.2px; } /* 优化长日期显示 */
+        .log-info span { font-size: 0.7rem; color: #bbb; letter-spacing: -0.2px; }
         
         .log-actions { display: flex; gap: 12px; align-items: center; }
         .btn-edit, .btn-del { border: none; padding: 6px 10px; border-radius: 8px; font-size: 0.7rem; cursor: pointer; }
@@ -48,7 +48,7 @@
 <body>
 
     <div class="avatar-container" onclick="document.getElementById('fileInput').click()">
-        <img id="baby-avatar" class="avatar-img" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjU0IiByPSI0MCIgZmlsbD0iI0ZGRkVEMSIvPjxjaXJjbGUgY3g9IjI4IiBjeT0iMzAiIHI9IjgiIGZpbGw9IiNDRUNFQ0UiLz48Y2lyY2xlIGN4PSI3MiIgY3k9IjMwIiByPSI4IiBmaWxsPSIjQ0VDRUNFIi8+PHBhdGggZD0iTTUwLDE0QzMwLDE0LDE0LDMwLDE0LDUwczE2LDM2LDM2LDM2czM2LTE2LDM2LTM2UzcwLDE0LDUwLDE0eiBNNzguMyw2MC42Qzc1LjIsNzUuNyw2NC45LDg3LjUsNTAsODcuNVMyNC44LDc1LjcsMjEuNyw2MC42QzIwLjgsNTYuMywyNCw1Mi41LDI4LjQsNTIuNWg0My4yQzc2LDUyLjUsNzkuMiw1Ni4zLDc4LjMsNjAuNnoiIGZpbGw9IiM4QTVDRTAiLz48Y2lyY2xlIGN4PSIzNyIgY3k9IjM1IiByPSI0IiBmaWxsPSIjRkZGRkZGIi8+PHBhdGggZD0iTTMwLDMyYzAtNS41LDQuNS0xMCwxMC0xMHMxMCw0LjUsMTAsMTBzLTQuNSwxMC0xMCwxMFMzMCwzNy41LDMwLDMyeiIgZmlsbD0iIzQwMzIzMCIvPjxjaXJjbGUgY3g9IjQwIiBjeT0iNDgiIHI9IjEuNSIgZmlsbD0iI0ZGRkZGRiIvPjxjaXJjbGUgY3g9IjM3IiBjeT0iNTUiIHI9IjcuNSIgZmlsbD0iI0ZGOTk5OSIgb3BhY2l0eT0iMC41Ii8+PGNpcmNsZAUgY3g9IjI4IiBjeT0iMTEiIHI9IjUuNSIgZmlsbD0iI0ZGOTk5OSIvPjwvY3ZnPg==" alt="宝宝头像">
+        <img id="baby-avatar" class="avatar-img" src="logo.png" alt="宝宝头像">
         <div class="camera-icon">📷</div>
     </div>
     <input type="file" id="fileInput" hidden accept="image/*" onchange="handleAvatarUpload(event)">
@@ -79,33 +79,26 @@
     <script type="module" src="app.js"></script>
 
     <script>
-        // 从本地缓存获取家庭暗号
         let familyId = localStorage.getItem('baby_family_id');
 
-        // 设置家庭暗号逻辑
         function setupFamilyId() {
             const input = prompt("请输入家庭专属暗号（全家统一用这个）：", familyId || "");
             if (input && input.trim() !== "") {
                 familyId = input.trim();
-                // 存入本地缓存
                 localStorage.setItem('baby_family_id', familyId);
-                // 刷新页面以应用新暗号
                 location.reload();
             }
         }
 
-        // 处理头像上传逻辑
         async function handleAvatarUpload(event) {
             const file = event.target.files[0];
             if (!file || !familyId) return;
             const imgEl = document.getElementById('baby-avatar');
             
-            // 1. 先在本地即时显示图片
             const reader = new FileReader();
             reader.onload = (e) => imgEl.src = e.target.result;
             reader.readAsDataURL(file);
 
-            // 2. 调用 app.js 中的函数上传到 Firebase
             if (window.uploadAvatar) {
                 document.getElementById('status-msg').innerText = "正在同步照片...";
                 await window.uploadAvatar(file, familyId);
@@ -114,7 +107,6 @@
             }
         }
 
-        // 点击大按钮记录逻辑
         async function handleAction(type) {
             if (!familyId) return setupFamilyId();
             if (!window.saveRecord) return;
@@ -127,7 +119,6 @@
             }
         }
 
-        // 清空所有记录逻辑
         async function handleClearAll() {
             if (!familyId) return setupFamilyId();
             const input = prompt("请输入家庭暗号以确认清空：");
@@ -146,36 +137,31 @@
             }
         }
 
-        // 页面初始化加载逻辑
         window.onload = () => {
             if (!familyId) {
                 setupFamilyId();
             } else {
-                // 显示当前暗号
                 document.getElementById('family-display').innerText = "当前家庭：" + familyId + " (点击修改)";
                 
-                // 加载头像缓存
                 const cached = localStorage.getItem(`avatar_${familyId}`);
                 if(cached) document.getElementById('baby-avatar').src = cached;
 
                 const listEl = document.getElementById('log-list');
                 
-                // 轮询检查 app.js 是否加载完毕并启动实时监听
                 const checkStatus = setInterval(() => {
                     if (window.listenToLogs) {
                         clearInterval(checkStatus);
-                        // 调用 app.js 中的监听函数
                         window.listenToLogs(familyId, (logs) => {
                             if (logs.length === 0) {
                                 listEl.innerHTML = '<li style="text-align:center;color:#ddd;padding:20px;">此暗号下暂无记录</li>';
                                 return;
                             }
-                            // 渲染列表 HTML
                             listEl.innerHTML = logs.map(log => `
                                 <li class="log-item">
                                     <div class="log-info">
                                         <b>${log.type}</b>
-                                        <span>${log.timeStr}</span> </div>
+                                        <span>${log.timeStr}</span>
+                                    </div>
                                     <div class="log-actions">
                                         <div style="position: relative; width: 32px; height: 32px;">
                                             <button class="btn-edit" style="width:100%; height:100%; padding:0; margin:0; display:flex; align-items:center; justify-content:center;">⏰</button>
@@ -190,11 +176,10 @@
                             `).join('');
                         });
                     }
-                }, 300); // 每 300 毫秒检查一次
+                }, 300);
             }
         };
 
-        // 挂载函数到 window 以便 HTML 中的 onclick 调用
         window.handleAction = handleAction;
         window.handleClearAll = handleClearAll;
         window.setupFamilyId = setupFamilyId;
