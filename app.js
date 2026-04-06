@@ -44,7 +44,7 @@ async function saveRecord(type, familyId) {
 }
 
 /**
- * 实时监听：适配手机端渲染
+ * 实时监听：适配手机端渲染并显示完整日期
  */
 function listenToLogs(familyId, callback) {
     const idStr = String(familyId); 
@@ -61,14 +61,16 @@ function listenToLogs(familyId, callback) {
             const data = doc.data();
             const date = data.timestamp ? data.timestamp.toDate() : new Date();
             
-            const timeStr = date.getHours().toString().padStart(2, '0') + ":" + 
-                           date.getMinutes().toString().padStart(2, '0');
-            
             const year = date.getFullYear();
             const month = (date.getMonth() + 1).toString().padStart(2, '0');
             const day = date.getDate().toString().padStart(2, '0');
             const hours = date.getHours().toString().padStart(2, '0');
             const minutes = date.getMinutes().toString().padStart(2, '0');
+
+            // 修改点：显示格式改为 年-月-日 时:分
+            const timeStr = `${year}-${month}-${day} ${hours}:${minutes}`;
+            
+            // 用于 datetime-local 控件回显的格式 (必须带 T)
             const fullTime = `${year}-${month}-${day}T${hours}:${minutes}`;
             
             logs.push({ id: doc.id, ...data, timeStr, fullTime });
@@ -115,11 +117,9 @@ async function deleteRecord(id) {
 async function clearAllRecords(familyId) {
     try {
         const idStr = String(familyId);
-        // 获取所有属于该家庭的记录
         const q = query(collection(db, "baby_logs"), where("familyId", "==", idStr));
         const querySnapshot = await getDocs(q);
         
-        // 执行批量删除
         const deletePromises = querySnapshot.docs.map(document => 
             deleteDoc(doc(db, "baby_logs", document.id))
         );
@@ -150,5 +150,5 @@ window.saveRecord = saveRecord;
 window.listenToLogs = listenToLogs;
 window.updateRecord = updateRecord;
 window.deleteRecord = deleteRecord;
-window.clearAllRecords = clearAllRecords; // 新增导出
+window.clearAllRecords = clearAllRecords;
 window.uploadAvatar = uploadAvatar;
