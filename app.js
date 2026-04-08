@@ -7,7 +7,6 @@ import {
     getStorage, ref, uploadBytes, getDownloadURL 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
-// 1. Firebase 配置信息
 const firebaseConfig = {
   apiKey: "AIzaSyCckGV4SJzHjUW2xMKrvtdv6PRb3js-0h8",
   authDomain: "baby-tracker-5464f.firebaseapp.com",
@@ -18,38 +17,28 @@ const firebaseConfig = {
   measurementId: "G-0RX7DMW4XY"
 };
 
-// 2. 初始化服务
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-/**
- * 保存记录
- */
-async function saveRecord(type, familyId) {
+// 保存记录
+export async function saveRecord(type, familyId) {
     try {
-        const idStr = String(familyId); 
         await addDoc(collection(db, "baby_logs"), {
-            type: type, 
-            familyId: idStr,
+            type: type,
+            familyId: String(familyId),
             timestamp: serverTimestamp(),
             createdAt: serverTimestamp()
         });
         return true;
-    } catch (e) {
-        console.error("保存失败:", e);
-        return false;
-    }
+    } catch (e) { return false; }
 }
 
-/**
- * 实时监听：针对数据展示进行优化
- */
-function listenToLogs(familyId, callback) {
-    const idStr = String(familyId); 
+// 实时监听
+export function listenToLogs(familyId, callback) {
     const q = query(
         collection(db, "baby_logs"), 
-        where("familyId", "==", idStr), 
+        where("familyId", "==", String(familyId)), 
         orderBy("timestamp", "desc"), 
         limit(50) 
     );
@@ -59,108 +48,39 @@ function listenToLogs(familyId, callback) {
         snapshot.forEach((doc) => {
             const data = doc.data();
             const date = data.timestamp ? data.timestamp.toDate() : new Date();
+            const timeStr = `${date.getFullYear()}-${(date.getMonth()+1).toString().padStart(2,'0')}-${date.getDate().toString().padStart(2,'0')} ${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}`;
+            const fullTime = `${date.getFullYear()}-${(date.getMonth()+1).toString().padStart(2,'0')}-${date.getDate().toString().padStart(2,'0')}T${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}`;
             
-            const year = date.getFullYear();
-            const month = (date.getMonth() + 1).toString().padStart(2, '0');
-            const day = date.getDate().toString().padStart(2, '0');
-            const hours = date.getHours().toString().padStart(2, '0');
-            const minutes = date.getMinutes().toString().padStart(2, '0');
-
-            // 1. 列表显示格式
-            const timeStr = `${year}-${month}-${day} ${hours}:${minutes}`;
-            // 2. 控件回显格式
-            const fullTime = `${year}-${month}-${day}T${hours}:${minutes}`;
-            
-            let currentType = data.type || "未知记录";
-            
-            // 修正旧数据混淆逻辑（保留你之前的修正需求）
-            if(currentType.includes('id=') || currentType === "宝宝头像") {
-                currentType = "吃甜甜";
-            }
-            
-            logs.push({ 
-                id: doc.id, 
-                ...data, 
-                type: currentType,
-                timeStr, 
-                fullTime, 
-                _dateObj: date 
-            });
+            logs.push({ id: doc.id, ...data, timeStr, fullTime, _dateObj: date });
         });
-        
-        // 强制按时间对象降序排列
         logs.sort((a, b) => b._dateObj - a._dateObj);
         callback(logs);
-    }, (error) => {
-        console.error("Firebase 监听报错:", error.message);
     });
 }
 
-/**
- * 更新时间记录
- */
-async function updateRecord(id, newTimeStr) {
+// 修改时间（防止闪退的重点：不要在回调里做太多重渲染动作）
+export async function updateRecord(id, newTimeStr) {
+    if (!newTimeStr) return;
     try {
         const newDate = new Date(newTimeStr);
-        await updateDoc(doc(db, "baby_logs", id), { 
-            timestamp: newDate 
-        });
+        await updateDoc(doc(db, "baby_logs", id), { timestamp: newDate });
         return true;
-    } catch (e) { 
-        console.error("更新时间失败:", e);
-        return false; 
-    }
+    } catch (e) { return false; }
 }
 
-/**
- * 【新增】更新记录内容（专门用于修改吃奶的先后顺序和时长）
- */
-async function updateTypeOnly(id, newType) {
+// 修改内容（关键函数：修改先后顺序和时长）
+export async function updateTypeOnly(id, newType) {
     try {
-        await updateDoc(doc(db, "baby_logs", id), { 
-            type: newType 
-        });
+        await updateDoc(doc(db, "baby_logs", id), { type: newType });
         return true;
-    } catch (e) {
-        console.error("更新详情失败:", e);
-        return false;
-    }
+    } catch (e) { return false; }
 }
 
-/**
- * 删除单条记录
- */
-async function deleteRecord(id) {
-    if(confirm("确定要删除这条记录吗？")) {
-        try {
-            await deleteDoc(doc(db, "baby_logs", id));
-            return true;
-        } catch (e) { return false; }
-    }
+export async function deleteRecord(id) {
+    if(confirm("确定删除？")) await deleteDoc(doc(db, "baby_logs", id));
 }
 
-/**
- * 一键清空
- */
-async function clearAllRecords(familyId) {
-    try {
-        const idStr = String(familyId);
-        const q = query(collection(db, "baby_logs"), where("familyId", "==", idStr));
-        const querySnapshot = await getDocs(q);
-        const deletePromises = querySnapshot.docs.map(document => 
-            deleteDoc(doc(db, "baby_logs", document.id))
-        );
-        await Promise.all(deletePromises);
-        return true;
-    } catch (e) {
-        return false;
-    }
-}
-
-/**
- * 上传头像
- */
-async function uploadAvatar(file, familyId) {
+export async function uploadAvatar(file, familyId) {
     try {
         const storageRef = ref(storage, `baby_info/${familyId}_avatar.jpg`);
         await uploadBytes(storageRef, file);
@@ -170,11 +90,9 @@ async function uploadAvatar(file, familyId) {
     } catch (e) { return null; }
 }
 
-// 导出到全局，供 HTML 调用
 window.saveRecord = saveRecord;
 window.listenToLogs = listenToLogs;
 window.updateRecord = updateRecord;
-window.updateTypeOnly = updateTypeOnly; // 必须导出
+window.updateTypeOnly = updateTypeOnly;
 window.deleteRecord = deleteRecord;
-window.clearAllRecords = clearAllRecords;
 window.uploadAvatar = uploadAvatar;
