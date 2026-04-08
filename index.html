@@ -28,17 +28,15 @@
         #log-list { list-style: none; padding: 0; margin: 0; }
         .log-item { margin-bottom: 12px; padding: 15px; border-radius: 18px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
         
-        /* 核心修复：明确分工 */
-        .log-info { flex: 1; min-height: 40px; display: flex; flex-direction: column; justify-content: center; } 
+        .log-info { flex: 1; min-height: 44px; display: flex; flex-direction: column; justify-content: center; cursor: pointer; } 
         .log-info b { font-size: 0.95rem; color: #444; pointer-events: none; }
         .log-info span { font-size: 0.75rem; color: #666; opacity: 0.8; pointer-events: none; }
         
-        .log-actions { display: flex; gap: 12px; align-items: center; margin-left: 10px; }
+        .log-actions { display: flex; gap: 12px; align-items: center; }
         .action-btn-wrap { position: relative; width: 36px; height: 36px; }
-        .action-btn { border: none; background: rgba(255,255,255,0.5); border-radius: 10px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; pointer-events: none; }
+        .action-btn { border: none; background: rgba(255,255,255,0.5); border-radius: 10px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
         
-        /* 真正的交互层 */
-        .time-picker-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; -webkit-appearance: none; }
+        .time-picker-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; -webkit-appearance: none; z-index: 5; }
 
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
         .modal-content { background: white; padding: 25px; border-radius: 30px; width: 80%; max-width: 340px; text-align: center; }
@@ -169,34 +167,34 @@
             if (!familyId) return setupFamilyId();
             const listEl = document.getElementById('log-list');
 
-            setInterval(() => {
-                if (window.listenToLogs) {
-                    window.listenToLogs(familyId, (logs) => {
-                        let html = '';
-                        logs.forEach(log => {
-                            let bgColor = log.type.startsWith('吃奶') ? 'var(--milk-color)' : (log.type === '排便' ? 'var(--poo-color)' : 'var(--med-color)');
-                            // 关键修改：通过 onclick 明确区分点击区域，禁止事件冒泡
-                            html += `
-                                <li class="log-item" style="background-color: ${bgColor};">
-                                    <div class="log-info" onclick="if('${log.type}'.startsWith('吃奶')) openMilkModal('${log.id}', '${log.type}')">
-                                        <b>${log.type}</b>
-                                        <span>${log.timeStr}</span>
+            // 监听数据并渲染列表
+            if (window.listenToLogs) {
+                window.listenToLogs(familyId, (logs) => {
+                    let html = '';
+                    logs.forEach(log => {
+                        let bgColor = log.type.startsWith('吃奶') ? 'var(--milk-color)' : (log.type === '排便' ? 'var(--poo-color)' : 'var(--med-color)');
+                        
+                        // 修复核心：在渲染字符串里给 log-actions 增加 onclick="event.stopPropagation()"
+                        html += `
+                            <li class="log-item" style="background-color: ${bgColor};">
+                                <div class="log-info" onclick="if('${log.type}'.startsWith('吃奶')) { openMilkModal('${log.id}', '${log.type}'); }">
+                                    <b>${log.type}</b>
+                                    <span>${log.timeStr}</span>
+                                </div>
+                                <div class="log-actions" onclick="event.stopPropagation()">
+                                    <div class="action-btn-wrap">
+                                        <button class="action-btn" type="button">⏰</button>
+                                        <input type="datetime-local" class="time-picker-overlay" value="${log.fullTime}" 
+                                               onchange="window.updateRecord('${log.id}', this.value)">
                                     </div>
-                                    <div class="log-actions">
-                                        <div class="action-btn-wrap">
-                                            <button class="action-btn">⏰</button>
-                                            <input type="datetime-local" class="time-picker-overlay" value="${log.fullTime}" 
-                                                   onchange="window.updateRecord('${log.id}', this.value)">
-                                        </div>
-                                        <button class="action-btn" style="color:#ff9999; background:rgba(255,255,255,0.5); border-radius:10px; cursor:pointer;" 
-                                                onclick="window.deleteRecord('${log.id}')">🗑️</button>
-                                    </div>
-                                </li>`;
-                        });
-                        listEl.innerHTML = html;
+                                    <button class="action-btn" type="button" style="color:#ff9999; cursor:pointer;" 
+                                            onclick="window.deleteRecord('${log.id}')">🗑️</button>
+                                </div>
+                            </li>`;
                     });
-                }
-            }, 1000);
+                    listEl.innerHTML = html;
+                });
+            }
         };
         window.handleClearAll = () => window.clearAllRecords(familyId);
     </script>
