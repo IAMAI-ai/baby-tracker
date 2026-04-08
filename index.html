@@ -15,7 +15,6 @@
         }
         body { font-family: 'PingFang SC', sans-serif; background-color: var(--bg-color); margin: 0; display: flex; flex-direction: column; align-items: center; padding-bottom: 40px; color: var(--text-color); }
         
-        /* 头像容器 */
         .avatar-container { position: relative; width: 100px; height: 100px; margin: 30px auto 10px; cursor: pointer; }
         .avatar-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 4px solid white; box-shadow: 0 4px 15px rgba(0,0,0,0.08); background-color: #eee; }
         .camera-icon { position: absolute; bottom: 5px; right: 5px; background: #fff; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); color: #888; }
@@ -24,7 +23,6 @@
         header h1 { font-size: 1.5rem; margin: 5px 0; color: #444; }
         header p { font-size: 0.8rem; opacity: 0.6; margin: 0; text-decoration: underline; cursor: pointer; }
 
-        /* 记录按钮 */
         .btn-container { width: 85%; max-width: 350px; display: grid; gap: 12px; }
         .log-card { border: none; border-radius: 20px; padding: 18px; display: flex; align-items: center; justify-content: center; gap: 12px; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
         .log-card:active { transform: scale(0.96); opacity: 0.8; }
@@ -34,10 +32,8 @@
         .poo { background-color: var(--poo-color); }
         .med { background-color: var(--med-color); }
 
-        /* 状态消息 */
         #status-msg { margin: 10px 0; font-size: 0.8rem; color: #888; min-height: 1.2rem; text-align: center; }
 
-        /* 历史列表 */
         .history-section { width: 85%; max-width: 350px; margin-top: 10px; }
         .history-title { font-size: 0.85rem; color: #aaa; margin-bottom: 10px; border-bottom: 1px dashed #ddd; padding-bottom: 5px; display: flex; justify-content: space-between; align-items: center; }
         #log-list { list-style: none; padding: 0; margin: 0; }
@@ -54,13 +50,12 @@
         }
         .log-info b { display: block; font-size: 0.95rem; margin-bottom: 2px; color: #444; }
         .log-info span { font-size: 0.75rem; color: #666; opacity: 0.8; }
-        
         .log-actions { display: flex; gap: 15px; align-items: center; }
     </style>
 </head>
 <body>
 
-   <div class="avatar-container" onclick="document.getElementById('fileInput').click()">
+    <div class="avatar-container" onclick="document.getElementById('fileInput').click()">
         <img id="baby-avatar" class="avatar-img" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjU0IiByPSI0MCIgZmlsbD0iI0ZGRkZGRiIvPjxjaXJjbGUgY3g9IjI4IiBjeT0iMzAiIHI9IjgiIGZpbGw9IiNDRUNFQ0UiLz48Y2lyY2xlIGN4PSI3MiIgY3k9IjMwIiByPSI4IiBmaWxsPSIjQ0VDRUNFIi8+PHBhdGggZD0iTTUwLDE0QzMwLDE0LDE0LDMwLDE0LDUwczE2LDM2LDM2LDM2czM2LTE2LDM2LTM2UzcwLDE0LDUwLDE0eiBNNzguMyw2MC42Qzc1LjIsNzUuNyw2NC45LDg3LjUsNTAsODcuNVMyNC44LDc1LjcsMjEuNyw2MC42QzIwLjgsNTYuMywyNCw1Mi41LDI4LjQsNTIuNWg0My4yQzc2LDUyLjUsNzkuMiw1Ni4zLDc4LjMsNjAuNnoiIGZpbGw9IiM4QTVDRTAiLz48Y2lyY2xlIGN4PSIzNyIgY3k9IjM1IiByPSI0IiBmaWxsPSIjRkZGRkZGIi8+PHBhdGggZD0iTTMwLDMyYzAtNS41LDQuNS0xMCwxMC0xMHMxMCw0LjUsMTAsMTBzLTQuNSwxMC0xMCwxMFMzMCwzNy41LDMwLDMyeiIgZmlsbD0iIzQwMzIzMCIvPjxjaXJjbGUgY3g9IjQwIiBjeT0iNDgiIHI9IjEuNSIgZmlsbD0iI0ZGRkZGRiIvPjxjaXJjbGUgY3g9IjM3IiBjeT0iNTUiIHI9IjcuNSIgZmlsbD0iI0ZGOTk5OSIgb3BhY2l0eT0iMC4zIi8+PGNpcmNsZSBjeD0iMjgiIGN5PSIxMSIgcj0iNS41IiBmaWxsPSIjRkY5OTk5Ii8+PC9zdmc+" alt="宝宝头像">
         <div class="camera-icon">📷</div>
     </div>
@@ -91,84 +86,82 @@
 
     <script type="module" src="app.js"></script>
 
-    let familyId = localStorage.getItem('baby_family_id');
-    let updateTimer = null;
-    let isEditing = false; // 新增：标记位，判断是否正在拨动时间轮盘
+    <script>
+        let familyId = localStorage.getItem('baby_family_id');
+        let updateTimer = null;
+        let isEditing = false; // 标记位：判断是否正在拨动时间轮盘
 
-    // ... 其他函数保持不变 (setupFamilyId, handleAvatarUpload, handleAction, handleClearAll) ...
-
-    function debouncedUpdate(id, newValue) {
-        isEditing = true; // 只要在动，就锁定页面不许刷新
-        clearTimeout(updateTimer);
-        updateTimer = setTimeout(async () => {
-            if(newValue && window.updateRecord) {
-                document.getElementById('status-msg').innerText = "正在修正时间...";
-                await window.updateRecord(id, newValue);
-                document.getElementById('status-msg').innerText = "⏰ 时间已修正";
-                setTimeout(() => {
-                    document.getElementById('status-msg').innerText = "";
-                    isEditing = false; // 修改完成后解锁，允许页面根据数据库新数据刷新
-                }, 1000);
-            } else {
-                isEditing = false;
+        function setupFamilyId() {
+            const input = prompt("请输入家庭专属暗号（全家统一用这个）：", familyId || "");
+            if (input && input.trim() !== "") {
+                familyId = input.trim();
+                localStorage.setItem('baby_family_id', familyId);
+                location.reload();
             }
-        }, 800); 
-    }
-
-    window.onload = () => {
-        if (!familyId) {
-            setupFamilyId();
-        } else {
-            document.getElementById('family-display').innerText = "当前家庭：" + familyId + " (点击修改)";
-            const cached = localStorage.getItem(`avatar_${familyId}`);
-            if(cached) document.getElementById('baby-avatar').src = cached;
-
-            const listEl = document.getElementById('log-list');
-            const checkStatus = setInterval(() => {
-                if (window.listenToLogs) {
-                    clearInterval(checkStatus);
-                    window.listenToLogs(familyId, (logs) => {
-                        // 🌟 核心修复：如果用户正在拨动轮盘，跳过本次列表重绘，保护输入框焦点
-                        if (isEditing) return; 
-
-                        if (logs.length === 0) {
-                            listEl.innerHTML = '<li style="text-align:center;color:#ddd;padding:20px;">此暗号下暂无记录</li>';
-                            return;
-                        }
-                        listEl.innerHTML = logs.map(log => {
-                            let bgColor = '#ffffff'; 
-                            if (log.type === '吃奶') bgColor = 'var(--milk-color)';
-                            if (log.type === '排便') bgColor = 'var(--poo-color)';
-                            if (log.type === '吃甜甜') bgColor = 'var(--med-color)';
-
-                            return `
-                                <li class="log-item" style="background-color: ${bgColor};">
-                                    <div class="log-info">
-                                        <b>${log.type}</b>
-                                        <span>${log.timeStr}</span>
-                                    </div>
-                                    <div class="log-actions">
-                                        <div style="position: relative; width: 32px; height: 32px; flex-shrink: 0;">
-                                            <button class="btn-edit" style="width:100%; height:100%; padding:0; margin:0; display:flex; align-items:center; justify-content:center; border:none; border-radius: 8px; background: rgba(255,255,255,0.5);">⏰</button>
-                                            <input type="datetime-local" 
-                                                   value="${log.fullTime}"
-                                                   style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; -webkit-appearance: none;"
-                                                   oninput="debouncedUpdate('${log.id}', this.value)"
-                                                   onblur="isEditing = false"> </div>
-                                        <button class="btn-del" 
-                                                onclick="window.deleteRecord('${log.id}')" 
-                                                style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center; border: none; background: rgba(255,255,255,0.5); border-radius: 8px; flex-shrink: 0; z-index: 10; color: #ff9999;">
-                                            🗑️
-                                        </button>
-                                    </div>
-                                </li>
-                            `;
-                        }).join('');
-                    });
-                }
-            }, 300);
         }
-    };
+
+        async function handleAvatarUpload(event) {
+            const file = event.target.files[0];
+            if (!file || !familyId) return;
+            const imgEl = document.getElementById('baby-avatar');
+            const reader = new FileReader();
+            reader.onload = (e) => imgEl.src = e.target.result;
+            reader.readAsDataURL(file);
+
+            if (window.uploadAvatar) {
+                document.getElementById('status-msg').innerText = "正在同步照片...";
+                await window.uploadAvatar(file, familyId);
+                document.getElementById('status-msg').innerText = "✅ 头像已更新";
+                setTimeout(() => document.getElementById('status-msg').innerText = "", 2000);
+            }
+        }
+
+        async function handleAction(type) {
+            if (!familyId) return setupFamilyId();
+            if (!window.saveRecord) return;
+            document.getElementById('status-msg').innerText = `正在同步 ${type}...`;
+            const success = await window.saveRecord(type, familyId);
+            if (success) {
+                document.getElementById('status-msg').innerText = `✨ 已记录 ${type}`;
+                setTimeout(() => document.getElementById('status-msg').innerText = "", 2000);
+            }
+        }
+
+        async function handleClearAll() {
+            if (!familyId) return setupFamilyId();
+            const input = prompt("请输入家庭暗号以确认清空：");
+            if (input === familyId) {
+                if (confirm("⚠️ 确定要删除该暗号下的所有记录吗？此操作无法撤销！")) {
+                    document.getElementById('status-msg').innerText = "正在清空记录...";
+                    const success = await window.clearAllRecords(familyId);
+                    if (success) {
+                        document.getElementById('status-msg').innerText = "🗑️ 记录已清空";
+                        setTimeout(() => document.getElementById('status-msg').innerText = "", 2000);
+                    }
+                }
+            } else if (input !== null) {
+                alert("暗号不正确");
+            }
+        }
+
+        // 修改时间的防抖函数：解决滑动冲突的核心
+        function debouncedUpdate(id, newValue) {
+            isEditing = true; // 只要在动，就锁定页面刷新
+            clearTimeout(updateTimer);
+            updateTimer = setTimeout(async () => {
+                if(newValue && window.updateRecord) {
+                    document.getElementById('status-msg').innerText = "正在修正时间...";
+                    await window.updateRecord(id, newValue);
+                    document.getElementById('status-msg').innerText = "⏰ 时间已修正";
+                    setTimeout(() => {
+                        document.getElementById('status-msg').innerText = "";
+                        isEditing = false; // 同步完成后解锁
+                    }, 800);
+                } else {
+                    isEditing = false;
+                }
+            }, 800); 
+        }
 
         window.onload = () => {
             if (!familyId) {
@@ -183,6 +176,9 @@
                     if (window.listenToLogs) {
                         clearInterval(checkStatus);
                         window.listenToLogs(familyId, (logs) => {
+                            // 如果正在编辑，跳过 UI 刷新，防止输入框失去焦点
+                            if (isEditing) return; 
+
                             if (logs.length === 0) {
                                 listEl.innerHTML = '<li style="text-align:center;color:#ddd;padding:20px;">此暗号下暂无记录</li>';
                                 return;
@@ -205,7 +201,8 @@
                                                 <input type="datetime-local" 
                                                        value="${log.fullTime}"
                                                        style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; -webkit-appearance: none;"
-                                                       oninput="debouncedUpdate('${log.id}', this.value)">
+                                                       oninput="window.debouncedUpdate('${log.id}', this.value)"
+                                                       onblur="window.isEditing = false">
                                             </div>
                                             <button class="btn-del" 
                                                     onclick="window.deleteRecord('${log.id}')" 
@@ -222,6 +219,7 @@
             }
         };
 
+        // 将函数挂载到 window，确保 HTML 内部的 oninput 能找到它们
         window.handleAction = handleAction;
         window.handleClearAll = handleClearAll;
         window.setupFamilyId = setupFamilyId;
