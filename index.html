@@ -15,14 +15,15 @@
         }
         body { font-family: 'PingFang SC', sans-serif; background-color: var(--bg-color); margin: 0; display: flex; flex-direction: column; align-items: center; padding-bottom: 40px; color: var(--text-color); }
         
+        /* 头像与头部 */
         .avatar-container { position: relative; width: 100px; height: 100px; margin: 30px auto 10px; cursor: pointer; }
         .avatar-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 4px solid white; box-shadow: 0 4px 15px rgba(0,0,0,0.08); background-color: #eee; }
         .camera-icon { position: absolute; bottom: 5px; right: 5px; background: #fff; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); color: #888; }
-
         header { text-align: center; margin-bottom: 15px; }
         header h1 { font-size: 1.5rem; margin: 5px 0; color: #444; }
         header p { font-size: 0.8rem; opacity: 0.6; margin: 0; text-decoration: underline; cursor: pointer; }
 
+        /* 记录按钮 */
         .btn-container { width: 85%; max-width: 350px; display: grid; gap: 12px; }
         .log-card { border: none; border-radius: 20px; padding: 18px; display: flex; align-items: center; justify-content: center; gap: 12px; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
         .log-card:active { transform: scale(0.96); opacity: 0.8; }
@@ -34,23 +35,28 @@
 
         #status-msg { margin: 10px 0; font-size: 0.8rem; color: #888; min-height: 1.2rem; text-align: center; }
 
+        /* 历史列表 */
         .history-section { width: 85%; max-width: 350px; margin-top: 10px; }
         .history-title { font-size: 0.85rem; color: #aaa; margin-bottom: 10px; border-bottom: 1px dashed #ddd; padding-bottom: 5px; display: flex; justify-content: space-between; align-items: center; }
         #log-list { list-style: none; padding: 0; margin: 0; }
-        
-        .log-item { 
-            margin-bottom: 12px; 
-            padding: 15px; 
-            border-radius: 18px; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
-            border: 1px solid rgba(0,0,0,0.03);
-        }
+        .log-item { margin-bottom: 12px; padding: 15px; border-radius: 18px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.02); border: 1px solid rgba(0,0,0,0.03); }
         .log-info b { display: block; font-size: 0.95rem; margin-bottom: 2px; color: #444; }
         .log-info span { font-size: 0.75rem; color: #666; opacity: 0.8; }
         .log-actions { display: flex; gap: 15px; align-items: center; }
+
+        /* 🍼 喂奶细节弹窗样式 */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
+        .modal-content { background: white; padding: 25px; border-radius: 30px; width: 80%; max-width: 320px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .modal-content h3 { margin-top: 0; color: #444; font-size: 1.2rem; }
+        .side-selector { display: flex; justify-content: space-around; margin: 20px 0; gap: 8px; }
+        .side-btn { flex: 1; padding: 12px 5px; border: 2px solid #f0f0f0; border-radius: 15px; background: #fafafa; cursor: pointer; font-size: 0.9rem; transition: 0.3s; }
+        .side-btn.active { background: var(--milk-color); border-color: #ffccbc; font-weight: bold; }
+        .duration-input { margin: 20px 0; font-size: 0.95rem; }
+        .duration-input input { width: 60px; padding: 8px; border-radius: 10px; border: 1px solid #ddd; text-align: center; font-size: 1rem; outline: none; }
+        .modal-btns { display: flex; gap: 12px; margin-top: 10px; }
+        .modal-btns button { flex: 1; padding: 12px; border-radius: 15px; border: none; cursor: pointer; font-size: 1rem; transition: 0.2s; }
+        .btn-cancel { background: #eee; color: #777; }
+        .btn-confirm { background: var(--milk-color); color: #444; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -74,6 +80,26 @@
 
     <div id="status-msg"></div>
 
+    <div id="milk-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3>🍼 喂奶细节</h3>
+            <div class="side-selector">
+                <button class="side-btn" onclick="selectSide('左侧')">左侧</button>
+                <button class="side-btn active" onclick="selectSide('双侧')">双侧</button>
+                <button class="side-btn" onclick="selectSide('右侧')">右侧</button>
+            </div>
+            <div class="duration-input">
+                <label>单次时长：</label>
+                <input type="number" id="milk-duration" value="15" min="1">
+                <span> 分钟</span>
+            </div>
+            <div class="modal-btns">
+                <button class="btn-cancel" onclick="closeMilkModal()">取消</button>
+                <button class="btn-confirm" onclick="confirmMilkDetail()">确认记录</button>
+            </div>
+        </div>
+    </div>
+
     <div class="history-section">
         <div class="history-title">
             <span>🕒 最近动态</span>
@@ -89,7 +115,8 @@
     <script>
         let familyId = localStorage.getItem('baby_family_id');
         let updateTimer = null;
-        let isEditing = false; // 标记位：判断是否正在拨动时间轮盘
+        let isEditing = false;
+        let currentMilkSide = '双侧'; // 记录当前选中的侧边
 
         function setupFamilyId() {
             const input = prompt("请输入家庭专属暗号（全家统一用这个）：", familyId || "");
@@ -116,13 +143,44 @@
             }
         }
 
+        // --- 🍼 喂奶细节逻辑 ---
+        function selectSide(side) {
+            currentMilkSide = side;
+            document.querySelectorAll('.side-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.innerText === side);
+            });
+        }
+
+        function closeMilkModal() {
+            document.getElementById('milk-modal').style.display = 'none';
+        }
+
+        async function confirmMilkDetail() {
+            const duration = document.getElementById('milk-duration').value || 0;
+            const finalType = `吃奶 (${currentMilkSide}${duration}min)`;
+            closeMilkModal();
+            saveRecordToDb(finalType);
+        }
+
+        // --- 核心操作函数 ---
         async function handleAction(type) {
             if (!familyId) return setupFamilyId();
+            
+            // 如果是吃奶，拦截并弹出弹窗
+            if (type === '吃奶') {
+                document.getElementById('milk-modal').style.display = 'flex';
+                return;
+            }
+            
+            saveRecordToDb(type);
+        }
+
+        async function saveRecordToDb(typeString) {
             if (!window.saveRecord) return;
-            document.getElementById('status-msg').innerText = `正在同步 ${type}...`;
-            const success = await window.saveRecord(type, familyId);
+            document.getElementById('status-msg').innerText = `正在同步 ${typeString}...`;
+            const success = await window.saveRecord(typeString, familyId);
             if (success) {
-                document.getElementById('status-msg').innerText = `✨ 已记录 ${type}`;
+                document.getElementById('status-msg').innerText = `✨ 已记录 ${typeString}`;
                 setTimeout(() => document.getElementById('status-msg').innerText = "", 2000);
             }
         }
@@ -144,9 +202,8 @@
             }
         }
 
-        // 修改时间的防抖函数：解决滑动冲突的核心
         function debouncedUpdate(id, newValue) {
-            isEditing = true; // 只要在动，就锁定页面刷新
+            isEditing = true;
             clearTimeout(updateTimer);
             updateTimer = setTimeout(async () => {
                 if(newValue && window.updateRecord) {
@@ -155,7 +212,7 @@
                     document.getElementById('status-msg').innerText = "⏰ 时间已修正";
                     setTimeout(() => {
                         document.getElementById('status-msg').innerText = "";
-                        isEditing = false; // 同步完成后解锁
+                        isEditing = false;
                     }, 800);
                 } else {
                     isEditing = false;
@@ -176,16 +233,14 @@
                     if (window.listenToLogs) {
                         clearInterval(checkStatus);
                         window.listenToLogs(familyId, (logs) => {
-                            // 如果正在编辑，跳过 UI 刷新，防止输入框失去焦点
                             if (isEditing) return; 
-
                             if (logs.length === 0) {
                                 listEl.innerHTML = '<li style="text-align:center;color:#ddd;padding:20px;">此暗号下暂无记录</li>';
                                 return;
                             }
                             listEl.innerHTML = logs.map(log => {
                                 let bgColor = '#ffffff'; 
-                                if (log.type === '吃奶') bgColor = 'var(--milk-color)';
+                                if (log.type.startsWith('吃奶')) bgColor = 'var(--milk-color)';
                                 if (log.type === '排便') bgColor = 'var(--poo-color)';
                                 if (log.type === '吃甜甜') bgColor = 'var(--med-color)';
 
@@ -219,12 +274,14 @@
             }
         };
 
-        // 将函数挂载到 window，确保 HTML 内部的 oninput 能找到它们
         window.handleAction = handleAction;
         window.handleClearAll = handleClearAll;
         window.setupFamilyId = setupFamilyId;
         window.handleAvatarUpload = handleAvatarUpload;
         window.debouncedUpdate = debouncedUpdate;
+        window.selectSide = selectSide;
+        window.closeMilkModal = closeMilkModal;
+        window.confirmMilkDetail = confirmMilkDetail;
     </script>
 </body>
 </html>
