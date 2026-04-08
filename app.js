@@ -7,7 +7,7 @@ import {
     getStorage, ref, uploadBytes, getDownloadURL 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
-// 1. Firebase 配置信息 (保持不变)
+// 1. Firebase 配置信息
 const firebaseConfig = {
   apiKey: "AIzaSyCckGV4SJzHjUW2xMKrvtdv6PRb3js-0h8",
   authDomain: "baby-tracker-5464f.firebaseapp.com",
@@ -24,18 +24,17 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 
 /**
- * 保存记录：强制将 familyId 转为字符串
+ * 保存记录
  */
 async function saveRecord(type, familyId) {
     try {
         const idStr = String(familyId); 
         await addDoc(collection(db, "baby_logs"), {
-            type: type, // 这里存的是正确的类型名称：吃甜甜
+            type: type, 
             familyId: idStr,
             timestamp: serverTimestamp(),
             createdAt: serverTimestamp()
         });
-        console.log(`成功记录: ${type}`);
         return true;
     } catch (e) {
         console.error("保存失败:", e);
@@ -44,7 +43,7 @@ async function saveRecord(type, familyId) {
 }
 
 /**
- * 实时监听：针对数据混淆和手机端重排进行深层优化
+ * 实时监听：针对数据展示进行优化
  */
 function listenToLogs(familyId, callback) {
     const idStr = String(familyId); 
@@ -67,37 +66,30 @@ function listenToLogs(familyId, callback) {
             const hours = date.getHours().toString().padStart(2, '0');
             const minutes = date.getMinutes().toString().padStart(2, '0');
 
-            // 1. 列表显示格式：YYYY-MM-DD HH:mm
+            // 1. 列表显示格式
             const timeStr = `${year}-${month}-${day} ${hours}:${minutes}`;
-            
-            // 2. 控件回显格式：YYYY-MM-DDTHH:mm (必须带T)
+            // 2. 控件回显格式
             const fullTime = `${year}-${month}-${day}T${hours}:${minutes}`;
             
-            // 【深度修复】：手动修正因旧数据ID混淆导致的问题，确保列表显示正确类型
-            let currentType = data.type;
-            if(data.type && data.type.includes('id=')) {
-                // 如果类型名称中包含了 "宝宝头像" 这样的图片，将其强制改为 "吃甜甜"
-                // 这是为了修正旧数据ID，不影响新纪录
-                currentType = "吃甜甜";
-            } else if (data.type === "宝宝头像" || !data.type) {
-                // 兜底：如果直接为空，通常是由于类型字段混淆引起的错误
+            let currentType = data.type || "未知记录";
+            
+            // 修正旧数据混淆逻辑（保留你之前的修正需求）
+            if(currentType.includes('id=') || currentType === "宝宝头像") {
                 currentType = "吃甜甜";
             }
             
             logs.push({ 
                 id: doc.id, 
                 ...data, 
-                type: currentType, // 使用修正后的类型名称
+                type: currentType,
                 timeStr, 
                 fullTime, 
-                _dateObj: date // 将日期对象存入辅助排序
+                _dateObj: date 
             });
         });
         
-        // 【关键排序逻辑】：修正完类型数据后，强制在前端重新按日期对象降序排列
+        // 强制按时间对象降序排列
         logs.sort((a, b) => b._dateObj - a._dateObj);
-        
-        console.log(`[实时监听] 更新并重新降序排列了 ${logs.length} 条数据`);
         callback(logs);
     }, (error) => {
         console.error("Firebase 监听报错:", error.message);
@@ -105,21 +97,33 @@ function listenToLogs(familyId, callback) {
 }
 
 /**
- * 更新记录：修复手机端选择时间闪退问题
+ * 更新时间记录
  */
 async function updateRecord(id, newTimeStr) {
     try {
         const newDate = new Date(newTimeStr);
-        // 使用 updateDoc 而不是全量替换，性能更好更稳定
         await updateDoc(doc(db, "baby_logs", id), { 
             timestamp: newDate 
         });
-        // 这里的 console.log 用于调试，可以删除
-        console.log(`成功将ID: ${id} 修改为新时间: ${newTimeStr}`);
         return true;
     } catch (e) { 
-        console.error("更新失败:", e);
+        console.error("更新时间失败:", e);
         return false; 
+    }
+}
+
+/**
+ * 【新增】更新记录内容（专门用于修改吃奶的先后顺序和时长）
+ */
+async function updateTypeOnly(id, newType) {
+    try {
+        await updateDoc(doc(db, "baby_logs", id), { 
+            type: newType 
+        });
+        return true;
+    } catch (e) {
+        console.error("更新详情失败:", e);
+        return false;
     }
 }
 
@@ -136,44 +140,41 @@ async function deleteRecord(id) {
 }
 
 /**
- * 一键清空当前家庭的所有记录
+ * 一键清空
  */
 async function clearAllRecords(familyId) {
     try {
         const idStr = String(familyId);
         const q = query(collection(db, "baby_logs"), where("familyId", "==", idStr));
         const querySnapshot = await getDocs(q);
-        
         const deletePromises = querySnapshot.docs.map(document => 
             deleteDoc(doc(db, "baby_logs", document.id))
         );
-        
         await Promise.all(deletePromises);
         return true;
     } catch (e) {
-        console.error("清空失败:", e);
         return false;
     }
 }
 
 /**
- * 上传头像到 Firebase Storage
+ * 上传头像
  */
 async function uploadAvatar(file, familyId) {
     try {
         const storageRef = ref(storage, `baby_info/${familyId}_avatar.jpg`);
         await uploadBytes(storageRef, file);
         const url = await getDownloadURL(storageRef);
-        // 将上传成功的地址存入本地缓存，防止刷新丢失
         localStorage.setItem(`avatar_${familyId}`, url);
         return url;
     } catch (e) { return null; }
 }
 
-// 导出到全局
+// 导出到全局，供 HTML 调用
 window.saveRecord = saveRecord;
 window.listenToLogs = listenToLogs;
 window.updateRecord = updateRecord;
+window.updateTypeOnly = updateTypeOnly; // 必须导出
 window.deleteRecord = deleteRecord;
 window.clearAllRecords = clearAllRecords;
 window.uploadAvatar = uploadAvatar;
