@@ -21,7 +21,6 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-// 保存新记录
 export async function saveRecord(type, familyId) {
     try {
         await addDoc(collection(db, "baby_logs"), {
@@ -33,7 +32,6 @@ export async function saveRecord(type, familyId) {
     } catch (e) { return false; }
 }
 
-// 实时监听与格式化
 export function listenToLogs(familyId, callback) {
     const q = query(
         collection(db, "baby_logs"), 
@@ -55,7 +53,6 @@ export function listenToLogs(familyId, callback) {
     });
 }
 
-// 修改时间（确保 onchange 触发，解决闪退）
 export async function updateRecord(id, newTimeStr) {
     if (!newTimeStr) return;
     try {
@@ -65,7 +62,6 @@ export async function updateRecord(id, newTimeStr) {
     } catch (e) { return false; }
 }
 
-// 【关键】修改文字内容（吃奶顺序/时长）
 export async function updateTypeOnly(id, newType) {
     try {
         await updateDoc(doc(db, "baby_logs", id), { type: newType });
@@ -74,7 +70,12 @@ export async function updateTypeOnly(id, newType) {
 }
 
 export async function deleteRecord(id) {
-    if(confirm("确定删除？")) await deleteDoc(doc(db, "baby_logs", id));
+    if(confirm("确定删除这条记录吗？")) {
+        try {
+            await deleteDoc(doc(db, "baby_logs", id));
+            return true;
+        } catch (e) { return false; }
+    }
 }
 
 export async function clearAllRecords(familyId) {
