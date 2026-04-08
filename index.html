@@ -3,68 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <link rel="apple-touch-icon" href="logo.png">
     <title>小乖乖成长日志</title>
     <style>
-        :root { 
-            --bg-color: #fcf9f2; 
-            --milk-color: #ffeadb; 
-            --poo-color: #e2f0d9; 
-            --med-color: #e1f5fe; 
-            --text-color: #555; 
-        }
-        body { font-family: 'PingFang SC', sans-serif; background-color: var(--bg-color); margin: 0; display: flex; flex-direction: column; align-items: center; padding-bottom: 40px; color: var(--text-color); overflow-x: hidden; }
+        :root { --bg-color: #fcf9f2; --milk-color: #ffeadb; --poo-color: #e2f0d9; --med-color: #e1f5fe; --text-color: #555; }
+        body { font-family: 'PingFang SC', sans-serif; background-color: var(--bg-color); margin: 0; display: flex; flex-direction: column; align-items: center; padding-bottom: 40px; color: var(--text-color); }
         
-        /* 头部样式 */
-        .avatar-container { position: relative; width: 100px; height: 100px; margin: 30px auto 10px; cursor: pointer; }
-        .avatar-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 4px solid white; box-shadow: 0 4px 15px rgba(0,0,0,0.08); background-color: #eee; }
+        /* 头部 */
+        .avatar-container { position: relative; width: 100px; height: 100px; margin: 30px auto 10px; }
+        .avatar-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 4px solid white; box-shadow: 0 4px 15px rgba(0,0,0,0.08); background: #eee; }
         header { text-align: center; margin-bottom: 15px; }
-        header h1 { font-size: 1.5rem; margin: 5px 0; color: #444; }
-        header p { font-size: 0.8rem; opacity: 0.6; margin: 0; text-decoration: underline; cursor: pointer; }
+        header h1 { font-size: 1.5rem; margin: 5px 0; }
+        header p { font-size: 0.8rem; opacity: 0.6; text-decoration: underline; cursor: pointer; }
 
-        /* 按钮容器 */
+        /* 按钮 */
         .btn-container { width: 85%; max-width: 350px; display: grid; gap: 12px; }
-        .log-card { border: none; border-radius: 20px; padding: 18px; display: flex; align-items: center; justify-content: center; gap: 12px; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
-        .log-card:active { transform: scale(0.96); opacity: 0.8; }
-        .log-card span { font-size: 1.8rem; }
-        .log-card label { font-size: 1rem; font-weight: 600; color: #444; cursor: pointer; }
+        .log-card { border: none; border-radius: 20px; padding: 18px; display: flex; align-items: center; justify-content: center; gap: 12px; cursor: pointer; }
         .milk { background-color: var(--milk-color); }
         .poo { background-color: var(--poo-color); }
         .med { background-color: var(--med-color); }
 
-        #status-msg { margin: 10px 0; font-size: 0.8rem; color: #888; min-height: 1.2rem; text-align: center; }
+        /* 列表 */
+        .history-section { width: 85%; max-width: 350px; margin-top: 20px; }
+        #log-list { list-style: none; padding: 0; }
+        .log-item { margin-bottom: 12px; padding: 15px; border-radius: 18px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+        .log-info { cursor: pointer; flex-grow: 1; } /* 点击文字区域改内容 */
+        .log-info b { display: block; font-size: 0.95rem; color: #444; }
+        .log-info span { font-size: 0.75rem; color: #888; }
+        .log-actions { display: flex; gap: 10px; }
 
-        /* 列表样式 */
-        .history-section { width: 85%; max-width: 350px; margin-top: 10px; }
-        .history-title { font-size: 0.85rem; color: #aaa; margin-bottom: 10px; border-bottom: 1px dashed #ddd; padding-bottom: 5px; display: flex; justify-content: space-between; align-items: center; }
-        #log-list { list-style: none; padding: 0; margin: 0; }
-        .log-item { margin-bottom: 12px; padding: 15px; border-radius: 18px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.02); border: 1px solid rgba(0,0,0,0.03); }
-        .log-info b { display: block; font-size: 0.95rem; margin-bottom: 2px; color: #444; }
-        .log-info span { font-size: 0.75rem; color: #666; opacity: 0.8; }
-        .log-actions { display: flex; gap: 10px; align-items: center; }
-
-        /* 🍼 喂奶弹窗升级版 */
+        /* 弹窗 */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
         .modal-content { background: white; padding: 25px; border-radius: 30px; width: 85%; max-width: 340px; text-align: center; }
-        
         .mode-tabs { display: flex; background: #f0f0f0; border-radius: 12px; padding: 4px; margin-bottom: 20px; }
-        .mode-tab { flex: 1; padding: 8px; font-size: 0.85rem; border-radius: 10px; cursor: pointer; }
-        .mode-tab.active { background: white; font-weight: bold; }
-
-        .time-input-group { display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 15px; padding: 10px; border-radius: 15px; background: #fafafa; }
-        .time-box { display: flex; flex-direction: column; align-items: center; gap: 5px; }
-        .time-box input { width: 55px; padding: 10px; border-radius: 10px; border: 1px solid #ddd; text-align: center; font-size: 1.1rem; }
-
-        .modal-btns { display: flex; gap: 12px; margin-top: 15px; }
-        .modal-btns button { flex: 1; padding: 14px; border-radius: 15px; border: none; cursor: pointer; font-size: 1rem; font-weight: bold; }
-        .btn-cancel { background: #eee; color: #777; }
-        .btn-confirm { background: var(--milk-color); color: #444; }
+        .mode-tab { flex: 1; padding: 8px; font-size: 0.8rem; border-radius: 10px; cursor: pointer; }
+        .mode-tab.active { background: white; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .time-input-group { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 15px; }
+        .time-box input { width: 50px; padding: 8px; border-radius: 8px; border: 1px solid #ddd; text-align: center; }
+        .modal-btns { display: flex; gap: 10px; }
+        .modal-btns button { flex: 1; padding: 12px; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; }
+        
+        #status-msg { margin: 10px 0; font-size: 0.8rem; color: #ff9999; height: 1rem; }
     </style>
 </head>
 <body>
 
     <div class="avatar-container" onclick="document.getElementById('fileInput').click()">
-        <img id="baby-avatar" class="avatar-img" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjU0IiByPSI0MCIgZmlsbD0iI0ZGRkZGRiIvPjxjaXJjbGUgY3g9IjI4IiBjeT0iMzAiIHI9IjgiIGZpbGw9IiNDRUNFQ0UiLz48Y2lyY2xlIGN4PSI3MiIgY3k9IjMwIiByPSI4IiBmaWxsPSIjQ0VDRUNFIi8+PHBhdGggZD0iTTUwLDE0QzMwLDE0LDE0LDMwLDE0LDUwczE2LDM2LDM2LDM2czM2LTE2LDM2LTM2UzcwLDE0LDUwLDE0eiBNNzguMyw2MC42Qzc1LjIsNzUuNyw2NC45LDg3LjUsNTAsODcuNVMyNC44LDc1LjcsMjEuNyw2MC42QzIwLjgsNTYuMywyNCw1Mi41LDI4LjQsNTIuNWg0My4yQzc2LDUyLjUsNzkuMiw1Ni4zLDc4LjMsNjAuNnoiIGZpbGw9IiM4QTVDRTAiLz48Y2lyY2xlIGN4PSIzNyIgY3k9IjM1IiByPSI0IiBmaWxsPSIjRkZGRkZGIi8+PHBhdGggZD0iTTMwLDMyYzAtNS41LDQuNS0xMCwxMC0xMHMxMCw0LjUsMTAsMTBzLTQuNSwxMC0xMCwxMFMzMCwzNy41LDMwLDMyeiIgZmlsbD0iIzQwMzIzMCIvPjxjaXJjbGUgY3g9IjQwIiBjeT0iNDgiIHI9IjEuNSIgZmlsbD0iI0ZGRkZGRiIvPjxjaXJjbGUgY3g9IjM3IiBjeT0iNTUiIHI9IjcuNSIgZmlsbD0iI0ZGOTk5OSIgb3BhY2l0eT0iMC4zIi8+PGNpcmNsZSBjeD0iMjgiIGN5PSIxMSIgcj0iNS41IiBmaWxsPSIjRkY5OTk5Ii8+PC9zdmc+" alt="头像">
+        <img id="baby-avatar" class="avatar-img" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjU0IiByPSI0MCIgZmlsbD0iI0ZGRkZGRiIvPjxjaXJjbGUgY3g9IjI4IiBjeT0iMzAiIHI9IjgiIGZpbGw9IiNDRUNFQ0UiLz48Y2lyY2xlIGN4PSI3MiIgY3k9IjMwIiByPSI4IiBmaWxsPSIjQ0VDRUNFIi8+PHBhdGggZD0iTTUwLDE0QzMwLDE0LDE0LDMwLDE0LDUwczE2LDM2LDM2LDM2czM2LTE2LDM2LTM2UzcwLDE0LDUwLDE0eiBNNzguMyw2MC42Qzc1LjIsNzUuNyw2NC45LDg3LjUsNTAsODcuNVMyNC44LDc1LjcsMjEuNyw2MC42QzIwLjgsNTYuMywyNCw1Mi41LDI4LjQsNTIuNWg0My4yQzc2LDUyLjUsNzkuMiw1Ni4zLDc4LjMsNjAuNnoiIGZpbGw9IiM4QTVDRTAiLz48Y2lyY2xlIGN4PSIzNyIgY3k9IjM1IiByPSI0IiBmaWxsPSIjRkZGRkZGIi8+PHBhdGggZD0iTTMwLDMyYzAtNS41LDQuNS0xMCwxMC0xMHMxMCw0LjUsMTAsMTBzLTQuNSwxMC0xMCwxMFMzMCwzNy41LDMwLDMyeiIgZmlsbD0iIzQwMzIzMCIvPjxjaXJjbGUgY3g9IjQwIiBjeT0iNDgiIHI9IjEuNSIgZmlsbD0iI0ZGRkZGRiIvPjxjaXJjbGUgY3g9IjM3IiBjeT0iNTUiIHI9IjcuNSIgZmlsbD0iI0ZGOTk5OSIgb3BhY2l0eT0iMC4zIi8+PGNpcmNsZSBjeD0iMjgiIGN5PSIxMSIgcj0iNS41IiBmaWxsPSIjRkY5OTk5Ii8+PC9zdmc+">
     </div>
     <input type="file" id="fileInput" hidden accept="image/*" onchange="handleAvatarUpload(event)">
 
@@ -85,52 +69,41 @@
         <div class="modal-content">
             <h3 id="modal-title">🍼 喂奶记录</h3>
             <div class="mode-tabs">
-                <div class="mode-tab active" onclick="switchMilkMode('leftFirst')">左 ➔ 右</div>
-                <div class="mode-tab" onclick="switchMilkMode('rightFirst')">右 ➔ 左</div>
-                <div class="mode-tab" onclick="switchMilkMode('single')">单侧</div>
+                <div class="mode-tab active" id="tab-leftFirst" onclick="switchMilkMode('leftFirst')">左 ➔ 右</div>
+                <div class="mode-tab" id="tab-rightFirst" onclick="switchMilkMode('rightFirst')">右 ➔ 左</div>
+                <div class="mode-tab" id="tab-single" onclick="switchMilkMode('single')">单侧</div>
             </div>
             <div class="time-input-group">
                 <div class="time-box">
-                    <label id="label-1">左侧(min)</label>
+                    <label id="label-1">左侧(m)</label>
                     <input type="number" id="time-1" value="15">
                 </div>
-                <div class="arrow-icon" id="mode-arrow">➔</div>
+                <div id="mode-arrow">➔</div>
                 <div class="time-box" id="box-2">
-                    <label id="label-2">右侧(min)</label>
+                    <label id="label-2">右侧(m)</label>
                     <input type="number" id="time-2" value="10">
                 </div>
             </div>
             <div class="modal-btns">
-                <button class="btn-cancel" onclick="closeMilkModal()">取消</button>
-                <button class="btn-confirm" onclick="confirmMilkDetail()">确认</button>
+                <button style="background:#eee;" onclick="closeMilkModal()">取消</button>
+                <button style="background:var(--milk-color);" onclick="confirmMilkDetail()">确认</button>
             </div>
         </div>
     </div>
 
     <div class="history-section">
-        <div class="history-title">
-            <span>🕒 最近动态</span>
-            <span onclick="handleClearAll()" style="color: #ff9999; cursor: pointer;">清空全部</span>
-        </div>
-        <ul id="log-list">
-            <li style="text-align:center; color:#ddd; padding:20px;">加载中...</li>
-        </ul>
+        <div id="log-list"></div>
     </div>
 
     <script type="module" src="app.js"></script>
-
     <script>
         let familyId = localStorage.getItem('baby_family_id');
         let milkMode = 'leftFirst';
-        let editingLogId = null; // 关键：记录当前正在编辑的条目 ID
+        let currentEditId = null; 
 
         function setupFamilyId() {
             const input = prompt("请输入家庭暗号：", familyId || "");
-            if (input) { 
-                familyId = input.trim(); 
-                localStorage.setItem('baby_family_id', familyId); 
-                location.reload(); 
-            }
+            if (input) { familyId = input.trim(); localStorage.setItem('baby_family_id', familyId); location.reload(); }
         }
 
         async function handleAvatarUpload(event) {
@@ -138,125 +111,103 @@
             if (file && window.uploadAvatar) await window.uploadAvatar(file, familyId);
         }
 
-        // --- 🍼 喂奶逻辑核心 ---
         function switchMilkMode(mode) {
             milkMode = mode;
-            document.querySelectorAll('.mode-tab').forEach((tab, i) => {
-                tab.classList.toggle('active', ['leftFirst', 'rightFirst', 'single'][i] === mode);
-            });
+            document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById('tab-' + mode).classList.add('active');
+            
             const isSingle = mode === 'single';
-            document.getElementById('box-2').style.display = isSingle ? 'none' : 'flex';
-            document.getElementById('mode-arrow').style.display = isSingle ? 'none' : 'block';
-            document.getElementById('label-1').innerText = mode === 'rightFirst' ? '右侧(min)' : (isSingle ? '单侧(min)' : '左侧(min)');
-            document.getElementById('label-2').innerText = mode === 'rightFirst' ? '左侧(min)' : '右侧(min)';
+            document.getElementById('box-2').style.visibility = isSingle ? 'hidden' : 'visible';
+            document.getElementById('mode-arrow').style.visibility = isSingle ? 'hidden' : 'visible';
+            
+            if (mode === 'rightFirst') {
+                document.getElementById('label-1').innerText = '右侧(m)';
+                document.getElementById('label-2').innerText = '左侧(m)';
+            } else {
+                document.getElementById('label-1').innerText = isSingle ? '时长(m)' : '左侧(m)';
+                document.getElementById('label-2').innerText = '右侧(m)';
+            }
         }
 
-        function openMilkModal(logData = null) {
-            if (logData) {
-                // 编辑模式：解析旧数据填充
-                editingLogId = logData.id;
+        // 打开弹窗（兼容新增和修改内容）
+        window.openMilkModal = function(id = null, oldType = "") {
+            currentEditId = id;
+            if (id && oldType.startsWith('吃奶')) {
                 document.getElementById('modal-title').innerText = "📝 修改喂奶细节";
-                const type = logData.type;
-                if (type.includes('➔')) {
-                    const times = type.match(/\d+/g);
-                    document.getElementById('time-1').value = times[0];
-                    document.getElementById('time-2').value = times[1];
-                    switchMilkMode(type.includes('左') && type.indexOf('左') < type.indexOf('右') ? 'leftFirst' : 'rightFirst');
+                // 自动解析旧数据填充
+                const nums = oldType.match(/\d+/g) || [15, 10];
+                document.getElementById('time-1').value = nums[0];
+                if (nums[1]) document.getElementById('time-2').value = nums[1];
+
+                if (oldType.includes('➔')) {
+                    switchMilkMode(oldType.indexOf('左') < oldType.indexOf('右') ? 'leftFirst' : 'rightFirst');
                 } else {
-                    const time = type.match(/\d+/g);
-                    document.getElementById('time-1').value = time ? time[0] : 15;
                     switchMilkMode('single');
                 }
             } else {
-                // 新增模式
-                editingLogId = null;
                 document.getElementById('modal-title').innerText = "🍼 喂奶记录";
                 document.getElementById('time-1').value = 15;
                 document.getElementById('time-2').value = 10;
                 switchMilkMode('leftFirst');
             }
             document.getElementById('milk-modal').style.display = 'flex';
-        }
+        };
 
         function closeMilkModal() { document.getElementById('milk-modal').style.display = 'none'; }
 
         async function confirmMilkDetail() {
-            const t1 = document.getElementById('time-1').value || 0;
-            const t2 = document.getElementById('time-2').value || 0;
-            let finalType = milkMode === 'leftFirst' ? `吃奶 (左${t1}m ➔ 右${t2}m)` : 
-                           (milkMode === 'rightFirst' ? `吃奶 (右${t1}m ➔ 左${t2}m)` : `吃奶 (单侧${t1}min)`);
-            
+            const t1 = document.getElementById('time-1').value;
+            const t2 = document.getElementById('time-2').value;
+            let finalType = "";
+            if (milkMode === 'leftFirst') finalType = `吃奶 (左${t1}m ➔ 右${t2}m)`;
+            else if (milkMode === 'rightFirst') finalType = `吃奶 (右${t1}m ➔ 左${t2}m)`;
+            else finalType = `吃奶 (单侧${t1}min)`;
+
             closeMilkModal();
-            if (editingLogId && window.updateTypeOnly) {
-                // 如果是编辑，调用专门更新类型的函数
-                await window.updateTypeOnly(editingLogId, finalType);
-                document.getElementById('status-msg').innerText = "✅ 记录已修正";
+            if (currentEditId) {
+                await window.updateTypeOnly(currentEditId, finalType);
             } else {
-                saveRecordToDb(finalType);
+                await window.saveRecord(finalType, familyId);
             }
         }
 
-        async function handleAction(type) {
+        window.handleAction = (type) => {
             if (!familyId) return setupFamilyId();
-            if (type === '吃奶') return openMilkModal();
-            saveRecordToDb(type);
-        }
+            if (type === '吃奶') openMilkModal();
+            else window.saveRecord(type, familyId);
+        };
 
-        async function saveRecordToDb(type) {
-            if (window.saveRecord) {
-                await window.saveRecord(type, familyId);
-                document.getElementById('status-msg').innerText = `✨ 已记录 ${type}`;
-                setTimeout(() => document.getElementById('status-msg').innerText = "", 2000);
-            }
-        }
-
-        async function handleClearAll() {
-            const input = prompt("输入暗号确认清空：");
-            if (input === familyId && confirm("确定清空吗？")) await window.clearAllRecords(familyId);
-        }
-
-        // --- 页面加载与数据渲染 ---
         window.onload = () => {
             if (!familyId) return setupFamilyId();
             document.getElementById('family-display').innerText = "当前家庭：" + familyId;
             const listEl = document.getElementById('log-list');
-            
+
             setInterval(() => {
                 if (window.listenToLogs) {
                     window.listenToLogs(familyId, (logs) => {
                         listEl.innerHTML = logs.map(log => {
                             let bgColor = log.type.startsWith('吃奶') ? 'var(--milk-color)' : (log.type === '排便' ? 'var(--poo-color)' : 'var(--med-color)');
-                            // 为吃奶记录增加点击编辑的功能
-                            const editClick = log.type.startsWith('吃奶') ? `onclick='openMilkEdit("${JSON.stringify(log).replace(/"/g, '&quot;')}")'` : "";
-                            
                             return `
-                                <li class="log-item" style="background-color: ${bgColor};">
-                                    <div class="log-info"><b>${log.type}</b><span>${log.timeStr}</span></div>
+                                <div class="log-item" style="background-color: ${bgColor};">
+                                    <div class="log-info" onclick="log.type.startsWith('吃奶') ? openMilkModal('${log.id}', '${log.type}') : null">
+                                        <b>${log.type}</b>
+                                        <span>${log.timeStr}</span>
+                                    </div>
                                     <div class="log-actions">
                                         <div style="position: relative; width: 32px; height: 32px;">
-                                            <button class="btn-edit" style="width:100%; height:100%; border:none; border-radius:8px; background:rgba(255,255,255,0.5);" ${editClick}>⏰</button>
+                                            <button style="width:100%; height:100%; border:none; background:rgba(255,255,255,0.4); border-radius:8px;">⏰</button>
                                             <input type="datetime-local" value="${log.fullTime}" 
                                                    style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0;"
                                                    oninput="window.updateRecord('${log.id}', this.value)">
                                         </div>
-                                        <button onclick="window.deleteRecord('${log.id}')" style="border:none; background:rgba(255,255,255,0.5); border-radius:8px; color:#ff9999; width:32px; height:32px;">🗑️</button>
+                                        <button onclick="window.deleteRecord('${log.id}')" style="border:none; background:rgba(255,255,255,0.4); border-radius:8px; color:#ff9999; width: 32px; height: 32px;">🗑️</button>
                                     </div>
-                                </li>`;
+                                </div>`;
                         }).join('');
                     });
                 }
             }, 1000);
         };
-
-        // 供列表调用的编辑中转
-        window.openMilkEdit = (jsonStr) => openMilkModal(JSON.parse(jsonStr));
-        window.handleAction = handleAction;
-        window.handleClearAll = handleClearAll;
-        window.switchMilkMode = switchMilkMode;
-        window.closeMilkModal = closeMilkModal;
-        window.confirmMilkDetail = confirmMilkDetail;
-        window.setupFamilyId = setupFamilyId;
-        window.handleAvatarUpload = handleAvatarUpload;
     </script>
 </body>
 </html>
