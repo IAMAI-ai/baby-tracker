@@ -46,9 +46,8 @@ export function listenToLogs(familyId, callback) {
             const date = data.timestamp ? data.timestamp.toDate() : new Date();
             const timeStr = `${date.getFullYear()}-${(date.getMonth()+1).toString().padStart(2,'0')}-${date.getDate().toString().padStart(2,'0')} ${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}`;
             const fullTime = `${date.getFullYear()}-${(date.getMonth()+1).toString().padStart(2,'0')}-${date.getDate().toString().padStart(2,'0')}T${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}`;
-            logs.push({ id: doc.id, ...data, timeStr, fullTime, _dateObj: date });
+            logs.push({ id: doc.id, ...data, timeStr, fullTime });
         });
-        logs.sort((a, b) => b._dateObj - a._dateObj);
         callback(logs);
     });
 }
@@ -58,23 +57,20 @@ export async function updateRecord(id, newTimeStr) {
     try {
         const newDate = new Date(newTimeStr);
         await updateDoc(doc(db, "baby_logs", id), { timestamp: newDate });
-        return true;
-    } catch (e) { return false; }
+    } catch (e) { console.error(e); }
 }
 
 export async function updateTypeOnly(id, newType) {
     try {
         await updateDoc(doc(db, "baby_logs", id), { type: newType });
-        return true;
-    } catch (e) { return false; }
+    } catch (e) { console.error(e); }
 }
 
 export async function deleteRecord(id) {
-    if(confirm("确定删除这条记录吗？")) {
+    if(confirm("确定要删除这条记录吗？")) {
         try {
             await deleteDoc(doc(db, "baby_logs", id));
-            return true;
-        } catch (e) { return false; }
+        } catch (e) { console.error(e); }
     }
 }
 
