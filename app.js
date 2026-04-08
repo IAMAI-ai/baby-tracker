@@ -21,20 +21,19 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-// 保存记录
+// 保存新记录
 export async function saveRecord(type, familyId) {
     try {
         await addDoc(collection(db, "baby_logs"), {
             type: type,
             familyId: String(familyId),
-            timestamp: serverTimestamp(),
-            createdAt: serverTimestamp()
+            timestamp: serverTimestamp()
         });
         return true;
     } catch (e) { return false; }
 }
 
-// 实时监听
+// 实时监听与格式化
 export function listenToLogs(familyId, callback) {
     const q = query(
         collection(db, "baby_logs"), 
@@ -42,7 +41,6 @@ export function listenToLogs(familyId, callback) {
         orderBy("timestamp", "desc"), 
         limit(50) 
     );
-
     return onSnapshot(q, (snapshot) => {
         const logs = [];
         snapshot.forEach((doc) => {
@@ -50,7 +48,6 @@ export function listenToLogs(familyId, callback) {
             const date = data.timestamp ? data.timestamp.toDate() : new Date();
             const timeStr = `${date.getFullYear()}-${(date.getMonth()+1).toString().padStart(2,'0')}-${date.getDate().toString().padStart(2,'0')} ${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}`;
             const fullTime = `${date.getFullYear()}-${(date.getMonth()+1).toString().padStart(2,'0')}-${date.getDate().toString().padStart(2,'0')}T${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}`;
-            
             logs.push({ id: doc.id, ...data, timeStr, fullTime, _dateObj: date });
         });
         logs.sort((a, b) => b._dateObj - a._dateObj);
@@ -58,7 +55,7 @@ export function listenToLogs(familyId, callback) {
     });
 }
 
-// 修改时间（防止闪退的重点：不要在回调里做太多重渲染动作）
+// 修改时间（确保 onchange 触发，解决闪退）
 export async function updateRecord(id, newTimeStr) {
     if (!newTimeStr) return;
     try {
@@ -68,7 +65,7 @@ export async function updateRecord(id, newTimeStr) {
     } catch (e) { return false; }
 }
 
-// 修改内容（关键函数：修改先后顺序和时长）
+// 【关键】修改文字内容（吃奶顺序/时长）
 export async function updateTypeOnly(id, newType) {
     try {
         await updateDoc(doc(db, "baby_logs", id), { type: newType });
@@ -78,6 +75,15 @@ export async function updateTypeOnly(id, newType) {
 
 export async function deleteRecord(id) {
     if(confirm("确定删除？")) await deleteDoc(doc(db, "baby_logs", id));
+}
+
+export async function clearAllRecords(familyId) {
+    if(confirm("确定清空全部记录吗？")) {
+        const q = query(collection(db, "baby_logs"), where("familyId", "==", String(familyId)));
+        const snap = await getDocs(q);
+        const del = snap.docs.map(d => deleteDoc(doc(db, "baby_logs", d.id)));
+        await Promise.all(del);
+    }
 }
 
 export async function uploadAvatar(file, familyId) {
@@ -95,4 +101,5 @@ window.listenToLogs = listenToLogs;
 window.updateRecord = updateRecord;
 window.updateTypeOnly = updateTypeOnly;
 window.deleteRecord = deleteRecord;
+window.clearAllRecords = clearAllRecords;
 window.uploadAvatar = uploadAvatar;
