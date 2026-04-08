@@ -42,7 +42,6 @@
         .history-title { font-size: 0.85rem; color: #aaa; margin-bottom: 10px; border-bottom: 1px dashed #ddd; padding-bottom: 5px; display: flex; justify-content: space-between; align-items: center; }
         #log-list { list-style: none; padding: 0; margin: 0; }
         
-        /* 列表项基础样式 */
         .log-item { 
             margin-bottom: 12px; 
             padding: 15px; 
@@ -94,6 +93,7 @@
 
     <script>
         let familyId = localStorage.getItem('baby_family_id');
+        let updateTimer = null; // 用于时间修改的防抖计时器
 
         function setupFamilyId() {
             const input = prompt("请输入家庭专属暗号（全家统一用这个）：", familyId || "");
@@ -151,17 +151,28 @@
             }
         }
 
+        // 修改时间防抖函数
+        function debouncedUpdate(id, newValue) {
+            clearTimeout(updateTimer);
+            updateTimer = setTimeout(async () => {
+                if(newValue && window.updateRecord) {
+                    document.getElementById('status-msg').innerText = "正在修正时间...";
+                    await window.updateRecord(id, newValue);
+                    document.getElementById('status-msg').innerText = "⏰ 时间已修正";
+                    setTimeout(() => document.getElementById('status-msg').innerText = "", 1500);
+                }
+            }, 800); // 0.8秒内没有再次滑动则触发同步
+        }
+
         window.onload = () => {
             if (!familyId) {
                 setupFamilyId();
             } else {
                 document.getElementById('family-display').innerText = "当前家庭：" + familyId + " (点击修改)";
-                
                 const cached = localStorage.getItem(`avatar_${familyId}`);
                 if(cached) document.getElementById('baby-avatar').src = cached;
 
                 const listEl = document.getElementById('log-list');
-                
                 const checkStatus = setInterval(() => {
                     if (window.listenToLogs) {
                         clearInterval(checkStatus);
@@ -171,7 +182,6 @@
                                 return;
                             }
                             listEl.innerHTML = logs.map(log => {
-                                // 根据类型设置背景色逻辑
                                 let bgColor = '#ffffff'; 
                                 if (log.type === '吃奶') bgColor = 'var(--milk-color)';
                                 if (log.type === '排便') bgColor = 'var(--poo-color)';
@@ -189,9 +199,8 @@
                                                 <input type="datetime-local" 
                                                        value="${log.fullTime}"
                                                        style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; -webkit-appearance: none;"
-                                                       onchange="if(this.value) window.updateRecord('${log.id}', this.value)">
+                                                       oninput="debouncedUpdate('${log.id}', this.value)">
                                             </div>
-                                            
                                             <button class="btn-del" 
                                                     onclick="window.deleteRecord('${log.id}')" 
                                                     style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center; border: none; background: rgba(255,255,255,0.5); border-radius: 8px; flex-shrink: 0; z-index: 10; color: #ff9999;">
@@ -211,6 +220,7 @@
         window.handleClearAll = handleClearAll;
         window.setupFamilyId = setupFamilyId;
         window.handleAvatarUpload = handleAvatarUpload;
+        window.debouncedUpdate = debouncedUpdate;
     </script>
 </body>
 </html>
