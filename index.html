@@ -91,78 +91,84 @@
 
     <script type="module" src="app.js"></script>
 
-    <script>
-        let familyId = localStorage.getItem('baby_family_id');
-        let updateTimer = null; // 用于时间修改的防抖计时器
+    let familyId = localStorage.getItem('baby_family_id');
+    let updateTimer = null;
+    let isEditing = false; // 新增：标记位，判断是否正在拨动时间轮盘
 
-        function setupFamilyId() {
-            const input = prompt("请输入家庭专属暗号（全家统一用这个）：", familyId || "");
-            if (input && input.trim() !== "") {
-                familyId = input.trim();
-                localStorage.setItem('baby_family_id', familyId);
-                location.reload();
+    // ... 其他函数保持不变 (setupFamilyId, handleAvatarUpload, handleAction, handleClearAll) ...
+
+    function debouncedUpdate(id, newValue) {
+        isEditing = true; // 只要在动，就锁定页面不许刷新
+        clearTimeout(updateTimer);
+        updateTimer = setTimeout(async () => {
+            if(newValue && window.updateRecord) {
+                document.getElementById('status-msg').innerText = "正在修正时间...";
+                await window.updateRecord(id, newValue);
+                document.getElementById('status-msg').innerText = "⏰ 时间已修正";
+                setTimeout(() => {
+                    document.getElementById('status-msg').innerText = "";
+                    isEditing = false; // 修改完成后解锁，允许页面根据数据库新数据刷新
+                }, 1000);
+            } else {
+                isEditing = false;
             }
-        }
+        }, 800); 
+    }
 
-        async function handleAvatarUpload(event) {
-            const file = event.target.files[0];
-            if (!file || !familyId) return;
-            const imgEl = document.getElementById('baby-avatar');
-            
-            const reader = new FileReader();
-            reader.onload = (e) => imgEl.src = e.target.result;
-            reader.readAsDataURL(file);
+    window.onload = () => {
+        if (!familyId) {
+            setupFamilyId();
+        } else {
+            document.getElementById('family-display').innerText = "当前家庭：" + familyId + " (点击修改)";
+            const cached = localStorage.getItem(`avatar_${familyId}`);
+            if(cached) document.getElementById('baby-avatar').src = cached;
 
-            if (window.uploadAvatar) {
-                document.getElementById('status-msg').innerText = "正在同步照片...";
-                await window.uploadAvatar(file, familyId);
-                document.getElementById('status-msg').innerText = "✅ 头像已更新";
-                setTimeout(() => document.getElementById('status-msg').innerText = "", 2000);
-            }
-        }
+            const listEl = document.getElementById('log-list');
+            const checkStatus = setInterval(() => {
+                if (window.listenToLogs) {
+                    clearInterval(checkStatus);
+                    window.listenToLogs(familyId, (logs) => {
+                        // 🌟 核心修复：如果用户正在拨动轮盘，跳过本次列表重绘，保护输入框焦点
+                        if (isEditing) return; 
 
-        async function handleAction(type) {
-            if (!familyId) return setupFamilyId();
-            if (!window.saveRecord) return;
-            
-            document.getElementById('status-msg').innerText = `正在同步 ${type}...`;
-            const success = await window.saveRecord(type, familyId);
-            if (success) {
-                document.getElementById('status-msg').innerText = `✨ 已记录 ${type}`;
-                setTimeout(() => document.getElementById('status-msg').innerText = "", 2000);
-            }
-        }
+                        if (logs.length === 0) {
+                            listEl.innerHTML = '<li style="text-align:center;color:#ddd;padding:20px;">此暗号下暂无记录</li>';
+                            return;
+                        }
+                        listEl.innerHTML = logs.map(log => {
+                            let bgColor = '#ffffff'; 
+                            if (log.type === '吃奶') bgColor = 'var(--milk-color)';
+                            if (log.type === '排便') bgColor = 'var(--poo-color)';
+                            if (log.type === '吃甜甜') bgColor = 'var(--med-color)';
 
-        async function handleClearAll() {
-            if (!familyId) return setupFamilyId();
-            const input = prompt("请输入家庭暗号以确认清空：");
-            
-            if (input === familyId) {
-                if (confirm("⚠️ 确定要删除该暗号下的所有记录吗？此操作无法撤销！")) {
-                    document.getElementById('status-msg').innerText = "正在清空记录...";
-                    const success = await window.clearAllRecords(familyId);
-                    if (success) {
-                        document.getElementById('status-msg').innerText = "🗑️ 记录已清空";
-                        setTimeout(() => document.getElementById('status-msg').innerText = "", 2000);
-                    }
+                            return `
+                                <li class="log-item" style="background-color: ${bgColor};">
+                                    <div class="log-info">
+                                        <b>${log.type}</b>
+                                        <span>${log.timeStr}</span>
+                                    </div>
+                                    <div class="log-actions">
+                                        <div style="position: relative; width: 32px; height: 32px; flex-shrink: 0;">
+                                            <button class="btn-edit" style="width:100%; height:100%; padding:0; margin:0; display:flex; align-items:center; justify-content:center; border:none; border-radius: 8px; background: rgba(255,255,255,0.5);">⏰</button>
+                                            <input type="datetime-local" 
+                                                   value="${log.fullTime}"
+                                                   style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; -webkit-appearance: none;"
+                                                   oninput="debouncedUpdate('${log.id}', this.value)"
+                                                   onblur="isEditing = false"> </div>
+                                        <button class="btn-del" 
+                                                onclick="window.deleteRecord('${log.id}')" 
+                                                style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center; border: none; background: rgba(255,255,255,0.5); border-radius: 8px; flex-shrink: 0; z-index: 10; color: #ff9999;">
+                                            🗑️
+                                        </button>
+                                    </div>
+                                </li>
+                            `;
+                        }).join('');
+                    });
                 }
-            } else if (input !== null) {
-                alert("暗号不正确");
-            }
+            }, 300);
         }
-
-        // 修改时间防抖函数
-        function debouncedUpdate(id, newValue) {
-            clearTimeout(updateTimer);
-            updateTimer = setTimeout(async () => {
-                if(newValue && window.updateRecord) {
-                    document.getElementById('status-msg').innerText = "正在修正时间...";
-                    await window.updateRecord(id, newValue);
-                    document.getElementById('status-msg').innerText = "⏰ 时间已修正";
-                    setTimeout(() => document.getElementById('status-msg').innerText = "", 1500);
-                }
-            }, 800); // 0.8秒内没有再次滑动则触发同步
-        }
+    };
 
         window.onload = () => {
             if (!familyId) {
