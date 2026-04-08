@@ -21,6 +21,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
+// 保存
 export async function saveRecord(type, familyId) {
     try {
         await addDoc(collection(db, "baby_logs"), {
@@ -28,23 +29,23 @@ export async function saveRecord(type, familyId) {
             familyId: String(familyId),
             timestamp: serverTimestamp()
         });
-        return true;
-    } catch (e) { return false; }
+    } catch (e) { console.error(e); }
 }
 
+// 监听数据（不需要定时器，Firebase会自动推送）
 export function listenToLogs(familyId, callback) {
     const q = query(
         collection(db, "baby_logs"), 
         where("familyId", "==", String(familyId)), 
         orderBy("timestamp", "desc"), 
-        limit(50) 
+        limit(30) 
     );
     return onSnapshot(q, (snapshot) => {
         const logs = [];
         snapshot.forEach((doc) => {
             const data = doc.data();
             const date = data.timestamp ? data.timestamp.toDate() : new Date();
-            const timeStr = `${date.getFullYear()}-${(date.getMonth()+1).toString().padStart(2,'0')}-${date.getDate().toString().padStart(2,'0')} ${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}`;
+            const timeStr = `${(date.getMonth()+1).toString().padStart(2,'0')}-${date.getDate().toString().padStart(2,'0')} ${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}`;
             const fullTime = `${date.getFullYear()}-${(date.getMonth()+1).toString().padStart(2,'0')}-${date.getDate().toString().padStart(2,'0')}T${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}`;
             logs.push({ id: doc.id, ...data, timeStr, fullTime });
         });
@@ -52,25 +53,28 @@ export function listenToLogs(familyId, callback) {
     });
 }
 
+// 修改时间
 export async function updateRecord(id, newTimeStr) {
     if (!newTimeStr) return;
     try {
         const newDate = new Date(newTimeStr);
         await updateDoc(doc(db, "baby_logs", id), { timestamp: newDate });
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error("更新时间失败:", e); }
 }
 
+// 修改内容
 export async function updateTypeOnly(id, newType) {
     try {
         await updateDoc(doc(db, "baby_logs", id), { type: newType });
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error("更新内容失败:", e); }
 }
 
+// 删除
 export async function deleteRecord(id) {
     if(confirm("确定要删除这条记录吗？")) {
         try {
             await deleteDoc(doc(db, "baby_logs", id));
-        } catch (e) { console.error(e); }
+        } catch (e) { console.error("删除失败:", e); }
     }
 }
 
@@ -83,20 +87,10 @@ export async function clearAllRecords(familyId) {
     }
 }
 
-export async function uploadAvatar(file, familyId) {
-    try {
-        const storageRef = ref(storage, `baby_info/${familyId}_avatar.jpg`);
-        await uploadBytes(storageRef, file);
-        const url = await getDownloadURL(storageRef);
-        localStorage.setItem(`avatar_${familyId}`, url);
-        return url;
-    } catch (e) { return null; }
-}
-
+// 挂载到全局
 window.saveRecord = saveRecord;
 window.listenToLogs = listenToLogs;
 window.updateRecord = updateRecord;
 window.updateTypeOnly = updateTypeOnly;
 window.deleteRecord = deleteRecord;
 window.clearAllRecords = clearAllRecords;
-window.uploadAvatar = uploadAvatar;
