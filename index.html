@@ -14,32 +14,34 @@
         header h1 { font-size: 1.5rem; margin: 5px 0; color: #444; }
         header p { font-size: 0.8rem; opacity: 0.6; margin: 0; text-decoration: underline; cursor: pointer; }
 
-        /* 大按钮 */
         .btn-container { width: 85%; max-width: 350px; display: grid; gap: 12px; }
-        .log-card { border: none; border-radius: 20px; padding: 18px; display: flex; align-items: center; justify-content: center; gap: 12px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
+        .log-card { border: none; border-radius: 20px; padding: 18px; display: flex; align-items: center; justify-content: center; gap: 12px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.03); -webkit-tap-highlight-color: transparent; }
         .log-card span { font-size: 1.8rem; }
         .log-card label { font-size: 1rem; font-weight: 600; color: #444; cursor: pointer; }
         .milk { background-color: var(--milk-color); }
         .poo { background-color: var(--poo-color); }
         .med { background-color: var(--med-color); }
 
-        #status-msg { margin: 10px 0; font-size: 0.8rem; color: #888; min-height: 1.2rem; text-align: center; }
-
-        /* 列表逻辑 */
         .history-section { width: 85%; max-width: 350px; margin-top: 10px; }
         .history-title { font-size: 0.85rem; color: #aaa; margin-bottom: 10px; border-bottom: 1px dashed #ddd; padding-bottom: 5px; display: flex; justify-content: space-between; }
-        #log-list { list-style: none; padding: 0; margin: 0; }
-        .log-item { margin-bottom: 12px; padding: 15px; border-radius: 18px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.02); position: relative; }
-        .log-info { flex: 1; cursor: pointer; z-index: 1; } /* 详情修改层 */
-        .log-info b { display: block; font-size: 0.95rem; margin-bottom: 2px; color: #444; }
-        .log-info span { font-size: 0.75rem; color: #666; opacity: 0.8; }
         
-        .log-actions { display: flex; gap: 12px; align-items: center; z-index: 2; } /* 按钮层，确保在上方 */
-        .action-btn { border: none; background: rgba(255,255,255,0.5); border-radius: 10px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.1rem; }
+        #log-list { list-style: none; padding: 0; margin: 0; }
+        .log-item { margin-bottom: 12px; padding: 15px; border-radius: 18px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+        
+        /* 核心修复：明确分工 */
+        .log-info { flex: 1; min-height: 40px; display: flex; flex-direction: column; justify-content: center; } 
+        .log-info b { font-size: 0.95rem; color: #444; pointer-events: none; }
+        .log-info span { font-size: 0.75rem; color: #666; opacity: 0.8; pointer-events: none; }
+        
+        .log-actions { display: flex; gap: 12px; align-items: center; margin-left: 10px; }
+        .action-btn-wrap { position: relative; width: 36px; height: 36px; }
+        .action-btn { border: none; background: rgba(255,255,255,0.5); border-radius: 10px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; pointer-events: none; }
+        
+        /* 真正的交互层 */
+        .time-picker-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; -webkit-appearance: none; }
 
-        /* 喂奶弹窗 */
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
-        .modal-content { background: white; padding: 25px; border-radius: 30px; width: 80%; max-width: 340px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+        .modal-content { background: white; padding: 25px; border-radius: 30px; width: 80%; max-width: 340px; text-align: center; }
         .mode-tabs { display: flex; background: #f0f0f0; border-radius: 12px; padding: 4px; margin-bottom: 20px; }
         .mode-tab { flex: 1; padding: 8px; font-size: 0.85rem; border-radius: 10px; cursor: pointer; }
         .mode-tab.active { background: white; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
@@ -69,7 +71,7 @@
 
     <div id="status-msg"></div>
 
-    <div id="milk-modal" class="modal-overlay">
+    <div id="milk-modal" class="modal-overlay" onclick="if(event.target==this) closeMilkModal()">
         <div class="modal-content">
             <h3 id="modal-title">🍼 喂奶记录</h3>
             <div class="mode-tabs">
@@ -104,7 +106,7 @@
     <script>
         let familyId = localStorage.getItem('baby_family_id');
         let milkMode = 'leftFirst';
-        let currentEditId = null; 
+        let currentEditId = null;
 
         function setupFamilyId() {
             const input = prompt("请输入家庭暗号：", familyId || "");
@@ -127,22 +129,15 @@
             document.getElementById('label-2').innerText = mode === 'rightFirst' ? '左侧(m)' : '右侧(m)';
         }
 
-        window.openMilkModal = function(id = null, oldType = "") {
+        window.openMilkModal = function(id, oldType) {
             currentEditId = id;
-            if (id && oldType.startsWith('吃奶')) {
-                document.getElementById('modal-title').innerText = "📝 修改喂奶细节";
-                const nums = oldType.match(/\d+/g) || [15, 10];
-                document.getElementById('time-1').value = nums[0];
-                if (nums[1]) document.getElementById('time-2').value = nums[1];
-                if (oldType.includes('➔')) {
-                    switchMilkMode(oldType.indexOf('左') < oldType.indexOf('右') ? 'leftFirst' : 'rightFirst');
-                } else { switchMilkMode('single'); }
-            } else {
-                document.getElementById('modal-title').innerText = "🍼 喂奶记录";
-                document.getElementById('time-1').value = 15;
-                document.getElementById('time-2').value = 10;
-                switchMilkMode('leftFirst');
-            }
+            document.getElementById('modal-title').innerText = "📝 修改喂奶细节";
+            const nums = oldType.match(/\d+/g) || [15, 10];
+            document.getElementById('time-1').value = nums[0];
+            if (nums[1]) document.getElementById('time-2').value = nums[1];
+            if (oldType.includes('➔')) {
+                switchMilkMode(oldType.indexOf('左') < oldType.indexOf('右') ? 'leftFirst' : 'rightFirst');
+            } else { switchMilkMode('single'); }
             document.getElementById('milk-modal').style.display = 'flex';
         };
 
@@ -160,37 +155,45 @@
 
         window.handleAction = (type) => {
             if (!familyId) return setupFamilyId();
-            if (type === '吃奶') openMilkModal();
-            else window.saveRecord(type, familyId);
+            if (type === '吃奶') {
+                currentEditId = null;
+                document.getElementById('modal-title').innerText = "🍼 喂奶记录";
+                document.getElementById('time-1').value = 15;
+                document.getElementById('time-2').value = 10;
+                switchMilkMode('leftFirst');
+                document.getElementById('milk-modal').style.display = 'flex';
+            } else window.saveRecord(type, familyId);
         };
 
         window.onload = () => {
             if (!familyId) return setupFamilyId();
-            document.getElementById('family-display').innerText = "暗号：" + familyId;
             const listEl = document.getElementById('log-list');
 
             setInterval(() => {
                 if (window.listenToLogs) {
                     window.listenToLogs(familyId, (logs) => {
-                        listEl.innerHTML = logs.map(log => {
+                        let html = '';
+                        logs.forEach(log => {
                             let bgColor = log.type.startsWith('吃奶') ? 'var(--milk-color)' : (log.type === '排便' ? 'var(--poo-color)' : 'var(--med-color)');
-                            return `
+                            // 关键修改：通过 onclick 明确区分点击区域，禁止事件冒泡
+                            html += `
                                 <li class="log-item" style="background-color: ${bgColor};">
                                     <div class="log-info" onclick="if('${log.type}'.startsWith('吃奶')) openMilkModal('${log.id}', '${log.type}')">
                                         <b>${log.type}</b>
                                         <span>${log.timeStr}</span>
                                     </div>
-                                    <div class="log-actions" onclick="event.stopPropagation()">
-                                        <div style="position: relative; width: 36px; height: 36px;">
+                                    <div class="log-actions">
+                                        <div class="action-btn-wrap">
                                             <button class="action-btn">⏰</button>
-                                            <input type="datetime-local" value="${log.fullTime}" 
-                                                   style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer"
+                                            <input type="datetime-local" class="time-picker-overlay" value="${log.fullTime}" 
                                                    onchange="window.updateRecord('${log.id}', this.value)">
                                         </div>
-                                        <button class="action-btn" onclick="window.deleteRecord('${log.id}')" style="color:#ff9999;">🗑️</button>
+                                        <button class="action-btn" style="color:#ff9999; background:rgba(255,255,255,0.5); border-radius:10px; cursor:pointer;" 
+                                                onclick="window.deleteRecord('${log.id}')">🗑️</button>
                                     </div>
                                 </li>`;
-                        }).join('');
+                        });
+                        listEl.innerHTML = html;
                     });
                 }
             }, 1000);
