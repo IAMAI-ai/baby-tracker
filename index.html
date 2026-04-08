@@ -5,26 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>小乖乖成长日志</title>
     <style>
-        :root { 
-            --bg-color: #fcf9f2; 
-            --milk-color: #ffeadb; 
-            --poo-color: #e2f0d9; 
-            --med-color: #e1f5fe; 
-            --text-color: #555; 
-        }
+        :root { --bg-color: #fcf9f2; --milk-color: #ffeadb; --poo-color: #e2f0d9; --med-color: #e1f5fe; --text-color: #555; }
         body { font-family: 'PingFang SC', sans-serif; background-color: var(--bg-color); margin: 0; display: flex; flex-direction: column; align-items: center; padding-bottom: 40px; color: var(--text-color); overflow-x: hidden; }
         
-        /* 顶部头像 */
         .avatar-container { position: relative; width: 100px; height: 100px; margin: 30px auto 10px; cursor: pointer; }
         .avatar-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 4px solid white; box-shadow: 0 4px 15px rgba(0,0,0,0.08); background-color: #eee; }
         header { text-align: center; margin-bottom: 15px; }
         header h1 { font-size: 1.5rem; margin: 5px 0; color: #444; }
         header p { font-size: 0.8rem; opacity: 0.6; margin: 0; text-decoration: underline; cursor: pointer; }
 
-        /* 还原大按钮布局 */
+        /* 大按钮 */
         .btn-container { width: 85%; max-width: 350px; display: grid; gap: 12px; }
-        .log-card { border: none; border-radius: 20px; padding: 18px; display: flex; align-items: center; justify-content: center; gap: 12px; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
-        .log-card:active { transform: scale(0.96); opacity: 0.8; }
+        .log-card { border: none; border-radius: 20px; padding: 18px; display: flex; align-items: center; justify-content: center; gap: 12px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
         .log-card span { font-size: 1.8rem; }
         .log-card label { font-size: 1rem; font-weight: 600; color: #444; cursor: pointer; }
         .milk { background-color: var(--milk-color); }
@@ -33,26 +25,28 @@
 
         #status-msg { margin: 10px 0; font-size: 0.8rem; color: #888; min-height: 1.2rem; text-align: center; }
 
-        /* 列表展示 */
+        /* 列表逻辑 */
         .history-section { width: 85%; max-width: 350px; margin-top: 10px; }
-        .history-title { font-size: 0.85rem; color: #aaa; margin-bottom: 10px; border-bottom: 1px dashed #ddd; padding-bottom: 5px; display: flex; justify-content: space-between; align-items: center; }
+        .history-title { font-size: 0.85rem; color: #aaa; margin-bottom: 10px; border-bottom: 1px dashed #ddd; padding-bottom: 5px; display: flex; justify-content: space-between; }
         #log-list { list-style: none; padding: 0; margin: 0; }
-        .log-item { margin-bottom: 12px; padding: 15px; border-radius: 18px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
-        .log-info { flex: 1; cursor: pointer; } /* 点击文字区域即可修改内容 */
+        .log-item { margin-bottom: 12px; padding: 15px; border-radius: 18px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.02); position: relative; }
+        .log-info { flex: 1; cursor: pointer; z-index: 1; } /* 详情修改层 */
         .log-info b { display: block; font-size: 0.95rem; margin-bottom: 2px; color: #444; }
         .log-info span { font-size: 0.75rem; color: #666; opacity: 0.8; }
-        .log-actions { display: flex; gap: 10px; align-items: center; }
+        
+        .log-actions { display: flex; gap: 12px; align-items: center; z-index: 2; } /* 按钮层，确保在上方 */
+        .action-btn { border: none; background: rgba(255,255,255,0.5); border-radius: 10px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.1rem; }
 
         /* 喂奶弹窗 */
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
-        .modal-content { background: white; padding: 25px; border-radius: 30px; width: 85%; max-width: 340px; text-align: center; }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+        .modal-content { background: white; padding: 25px; border-radius: 30px; width: 80%; max-width: 340px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
         .mode-tabs { display: flex; background: #f0f0f0; border-radius: 12px; padding: 4px; margin-bottom: 20px; }
         .mode-tab { flex: 1; padding: 8px; font-size: 0.85rem; border-radius: 10px; cursor: pointer; }
-        .mode-tab.active { background: white; box-shadow: 0 2px 6px rgba(0,0,0,0.05); font-weight: bold; }
-        .time-input-group { display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 15px; padding: 10px; border-radius: 15px; background: #fafafa; }
-        .time-box input { width: 55px; padding: 10px; border-radius: 10px; border: 1px solid #ddd; text-align: center; font-size: 1.1rem; }
+        .mode-tab.active { background: white; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .time-input-group { display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 15px; background: #fafafa; padding: 10px; border-radius: 15px; }
+        .time-box input { width: 50px; padding: 8px; border-radius: 8px; border: 1px solid #ddd; text-align: center; font-size: 1.1rem; }
         .modal-btns { display: flex; gap: 12px; margin-top: 15px; }
-        .modal-btns button { flex: 1; padding: 14px; border-radius: 15px; border: none; cursor: pointer; font-size: 1rem; font-weight: bold; }
+        .modal-btns button { flex: 1; padding: 14px; border-radius: 15px; border: none; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -64,7 +58,7 @@
 
     <header>
         <h1>宝宝成长记录</h1>
-        <p id="family-display" onclick="setupFamilyId()">点击设置家庭暗号</p>
+        <p id="family-display" onclick="setupFamilyId()">设置家庭暗号</p>
     </header>
 
     <div class="btn-container">
@@ -85,24 +79,24 @@
             </div>
             <div class="time-input-group">
                 <div class="time-box">
-                    <label id="label-1">左侧(m)</label>
+                    <label id="label-1" style="font-size:0.7rem;display:block">左侧(m)</label>
                     <input type="number" id="time-1" value="15">
                 </div>
                 <div id="mode-arrow">➔</div>
                 <div class="time-box" id="box-2">
-                    <label id="label-2">右侧(m)</label>
+                    <label id="label-2" style="font-size:0.7rem;display:block">右侧(m)</label>
                     <input type="number" id="time-2" value="10">
                 </div>
             </div>
             <div class="modal-btns">
-                <button class="btn-cancel" style="background:#eee;color:#777" onclick="closeMilkModal()">取消</button>
-                <button class="btn-confirm" style="background:var(--milk-color);color:#444" onclick="confirmMilkDetail()">确认</button>
+                <button style="background:#eee;color:#777" onclick="closeMilkModal()">取消</button>
+                <button style="background:var(--milk-color);color:#444" onclick="confirmMilkDetail()">确认</button>
             </div>
         </div>
     </div>
 
     <div class="history-section">
-        <div class="history-title"><span>🕒 最近动态</span><span onclick="handleClearAll()" style="color:#ff9999;">清空全部</span></div>
+        <div class="history-title"><span>🕒 最近动态</span><span onclick="handleClearAll()" style="color:#ff9999;cursor:pointer">清空全部</span></div>
         <ul id="log-list"></ul>
     </div>
 
@@ -172,7 +166,7 @@
 
         window.onload = () => {
             if (!familyId) return setupFamilyId();
-            document.getElementById('family-display').innerText = "当前家庭：" + familyId;
+            document.getElementById('family-display').innerText = "暗号：" + familyId;
             const listEl = document.getElementById('log-list');
 
             setInterval(() => {
@@ -180,21 +174,20 @@
                     window.listenToLogs(familyId, (logs) => {
                         listEl.innerHTML = logs.map(log => {
                             let bgColor = log.type.startsWith('吃奶') ? 'var(--milk-color)' : (log.type === '排便' ? 'var(--poo-color)' : 'var(--med-color)');
-                            // 点击文字触发详情修改，点击闹钟触发时间修改
                             return `
                                 <li class="log-item" style="background-color: ${bgColor};">
                                     <div class="log-info" onclick="if('${log.type}'.startsWith('吃奶')) openMilkModal('${log.id}', '${log.type}')">
                                         <b>${log.type}</b>
                                         <span>${log.timeStr}</span>
                                     </div>
-                                    <div class="log-actions">
-                                        <div style="position: relative; width: 32px; height: 32px;">
-                                            <button style="width:100%; height:100%; border:none; background:rgba(255,255,255,0.4); border-radius:8px;">⏰</button>
+                                    <div class="log-actions" onclick="event.stopPropagation()">
+                                        <div style="position: relative; width: 36px; height: 36px;">
+                                            <button class="action-btn">⏰</button>
                                             <input type="datetime-local" value="${log.fullTime}" 
-                                                   style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0;"
+                                                   style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer"
                                                    onchange="window.updateRecord('${log.id}', this.value)">
                                         </div>
-                                        <button onclick="window.deleteRecord('${log.id}')" style="border:none; background:rgba(255,255,255,0.4); border-radius:8px; color:#ff9999; width: 32px; height: 32px;">🗑️</button>
+                                        <button class="action-btn" onclick="window.deleteRecord('${log.id}')" style="color:#ff9999;">🗑️</button>
                                     </div>
                                 </li>`;
                         }).join('');
