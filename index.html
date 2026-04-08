@@ -6,7 +6,13 @@
     <link rel="apple-touch-icon" href="logo.png">
     <title>小乖乖成长日志</title>
     <style>
-        :root { --bg-color: #fcf9f2; --milk-color: #ffeadb; --poo-color: #e2f0d9; --med-color: #e1f5fe; --text-color: #555; }
+        :root { 
+            --bg-color: #fcf9f2; 
+            --milk-color: #ffeadb; 
+            --poo-color: #e2f0d9; 
+            --med-color: #e1f5fe; 
+            --text-color: #555; 
+        }
         body { font-family: 'PingFang SC', sans-serif; background-color: var(--bg-color); margin: 0; display: flex; flex-direction: column; align-items: center; padding-bottom: 40px; color: var(--text-color); }
         
         /* 头像容器 */
@@ -35,14 +41,22 @@
         .history-section { width: 85%; max-width: 350px; margin-top: 10px; }
         .history-title { font-size: 0.85rem; color: #aaa; margin-bottom: 10px; border-bottom: 1px dashed #ddd; padding-bottom: 5px; display: flex; justify-content: space-between; align-items: center; }
         #log-list { list-style: none; padding: 0; margin: 0; }
-        .log-item { background: white; margin-bottom: 10px; padding: 15px; border-radius: 18px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
-        .log-info b { display: block; font-size: 0.95rem; margin-bottom: 2px; }
-        .log-info span { font-size: 0.7rem; color: #bbb; letter-spacing: -0.2px; }
         
-        .log-actions { display: flex; gap: 12px; align-items: center; }
-        .btn-edit, .btn-del { border: none; padding: 6px 10px; border-radius: 8px; font-size: 0.7rem; cursor: pointer; }
-        .btn-edit { background: #f5f5f5; color: #666; }
-        .btn-del { background: #fff0f0; color: #ff9999; }
+        /* 列表项基础样式 */
+        .log-item { 
+            margin-bottom: 12px; 
+            padding: 15px; 
+            border-radius: 18px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+            border: 1px solid rgba(0,0,0,0.03);
+        }
+        .log-info b { display: block; font-size: 0.95rem; margin-bottom: 2px; color: #444; }
+        .log-info span { font-size: 0.75rem; color: #666; opacity: 0.8; }
+        
+        .log-actions { display: flex; gap: 15px; align-items: center; }
     </style>
 </head>
 <body>
@@ -156,29 +170,37 @@
                                 listEl.innerHTML = '<li style="text-align:center;color:#ddd;padding:20px;">此暗号下暂无记录</li>';
                                 return;
                             }
-                            listEl.innerHTML = logs.map(log => `
-    <li class="log-item">
-        <div class="log-info">
-            <b>${log.type}</b>
-            <span>${log.timeStr}</span>
-        </div>
-        <div class="log-actions" style="display: flex; gap: 15px; align-items: center;">
-            <div style="position: relative; width: 32px; height: 32px; flex-shrink: 0;">
-                <button class="btn-edit" style="width:100%; height:100%; padding:0; margin:0; display:flex; align-items:center; justify-content:center; border-radius: 8px; background: #f5f5f5;">⏰</button>
-                <input type="datetime-local" 
-                       value="${log.fullTime}"
-                       style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; -webkit-appearance: none;"
-                       onchange="if(this.value) window.updateRecord('${log.id}', this.value)">
-            </div>
-            
-            <button class="btn-del" 
-                    onclick="window.deleteRecord('${log.id}')" 
-                    style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center; background: #fff0f0; border-radius: 8px; flex-shrink: 0; z-index: 10;">
-                🗑️
-            </button>
-        </div>
-    </li>
-`).join('');
+                            listEl.innerHTML = logs.map(log => {
+                                // 根据类型设置背景色逻辑
+                                let bgColor = '#ffffff'; 
+                                if (log.type === '吃奶') bgColor = 'var(--milk-color)';
+                                if (log.type === '排便') bgColor = 'var(--poo-color)';
+                                if (log.type === '吃甜甜') bgColor = 'var(--med-color)';
+
+                                return `
+                                    <li class="log-item" style="background-color: ${bgColor};">
+                                        <div class="log-info">
+                                            <b>${log.type}</b>
+                                            <span>${log.timeStr}</span>
+                                        </div>
+                                        <div class="log-actions">
+                                            <div style="position: relative; width: 32px; height: 32px; flex-shrink: 0;">
+                                                <button class="btn-edit" style="width:100%; height:100%; padding:0; margin:0; display:flex; align-items:center; justify-content:center; border:none; border-radius: 8px; background: rgba(255,255,255,0.5);">⏰</button>
+                                                <input type="datetime-local" 
+                                                       value="${log.fullTime}"
+                                                       style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; -webkit-appearance: none;"
+                                                       onchange="if(this.value) window.updateRecord('${log.id}', this.value)">
+                                            </div>
+                                            
+                                            <button class="btn-del" 
+                                                    onclick="window.deleteRecord('${log.id}')" 
+                                                    style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center; border: none; background: rgba(255,255,255,0.5); border-radius: 8px; flex-shrink: 0; z-index: 10; color: #ff9999;">
+                                                🗑️
+                                            </button>
+                                        </div>
+                                    </li>
+                                `;
+                            }).join('');
                         });
                     }
                 }, 300);
