@@ -105,6 +105,7 @@
         let familyId = localStorage.getItem('baby_family_id');
         let milkMode = 'leftFirst';
         let currentEditId = null;
+        let isEditingTime = false; // 核心：重绘锁定开关
 
         function setupFamilyId() {
             const input = prompt("请输入家庭暗号：", familyId || "");
@@ -163,18 +164,29 @@
             } else window.saveRecord(type, familyId);
         };
 
+        // 处理时间更新并解锁界面
+        window.handleTimeUpdate = async (id, newVal) => {
+            if(!newVal) {
+                isEditingTime = false;
+                return;
+            }
+            await window.updateRecord(id, newVal);
+            isEditingTime = false; // 允许下次数据变动时刷新DOM
+        };
+
         window.onload = () => {
             if (!familyId) return setupFamilyId();
             const listEl = document.getElementById('log-list');
 
-            // 监听数据并渲染列表
             if (window.listenToLogs) {
                 window.listenToLogs(familyId, (logs) => {
+                    // 如果正在操作时间选择器，绝对禁止重绘列表
+                    if (isEditingTime) return;
+
                     let html = '';
                     logs.forEach(log => {
                         let bgColor = log.type.startsWith('吃奶') ? 'var(--milk-color)' : (log.type === '排便' ? 'var(--poo-color)' : 'var(--med-color)');
                         
-                        // 修复核心：在渲染字符串里给 log-actions 增加 onclick="event.stopPropagation()"
                         html += `
                             <li class="log-item" style="background-color: ${bgColor};">
                                 <div class="log-info" onclick="if('${log.type}'.startsWith('吃奶')) { openMilkModal('${log.id}', '${log.type}'); }">
@@ -185,7 +197,9 @@
                                     <div class="action-btn-wrap">
                                         <button class="action-btn" type="button">⏰</button>
                                         <input type="datetime-local" class="time-picker-overlay" value="${log.fullTime}" 
-                                               onchange="window.updateRecord('${log.id}', this.value)">
+                                               onfocus="isEditingTime = true" 
+                                               onchange="window.handleTimeUpdate('${log.id}', this.value)"
+                                               onblur="setTimeout(() => { isEditingTime = false; }, 500)">
                                     </div>
                                     <button class="action-btn" type="button" style="color:#ff9999; cursor:pointer;" 
                                             onclick="window.deleteRecord('${log.id}')">🗑️</button>
