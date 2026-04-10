@@ -7,16 +7,12 @@
     <style>
         :root { --bg-color: #fcf9f2; --milk-color: #ffeadb; --poo-color: #e2f0d9; --med-color: #e1f5fe; --d3-color: #fff9db; --text-color: #555; }
         body { font-family: 'PingFang SC', sans-serif; background-color: var(--bg-color); margin: 0; display: flex; flex-direction: column; align-items: center; padding-bottom: 40px; color: var(--text-color); overflow-x: hidden; }
-        
         .avatar-container { position: relative; width: 100px; height: 100px; margin: 30px auto 10px; cursor: pointer; }
         .avatar-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 4px solid white; box-shadow: 0 4px 15px rgba(0,0,0,0.08); background-color: #eee; }
         header { text-align: center; margin-bottom: 15px; }
         header h1 { font-size: 1.5rem; margin: 5px 0; color: #444; }
         header p { font-size: 0.8rem; opacity: 0.6; margin: 0; text-decoration: underline; cursor: pointer; }
-
-        /* D3 提醒区样式 */
         #d3-alert { width: 85%; max-width: 350px; margin-bottom: 15px; border-radius: 15px; padding: 12px; display: none; text-align: center; font-size: 0.9rem; font-weight: bold; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-
         .btn-container { width: 85%; max-width: 350px; display: grid; gap: 12px; }
         .log-card { border: none; border-radius: 20px; padding: 18px; display: flex; align-items: center; justify-content: center; gap: 12px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.03); -webkit-tap-highlight-color: transparent; }
         .log-card span { font-size: 1.8rem; }
@@ -24,23 +20,17 @@
         .milk { background-color: var(--milk-color); }
         .poo { background-color: var(--poo-color); }
         .med { background-color: var(--med-color); }
-
         .history-section { width: 85%; max-width: 350px; margin-top: 10px; }
         .history-title { font-size: 0.85rem; color: #aaa; margin-bottom: 10px; border-bottom: 1px dashed #ddd; padding-bottom: 5px; display: flex; justify-content: space-between; }
-        
         #log-list { list-style: none; padding: 0; margin: 0; }
         .log-item { margin-bottom: 12px; padding: 15px; border-radius: 18px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
-        
         .log-info { flex: 1; min-height: 44px; display: flex; flex-direction: column; justify-content: center; cursor: pointer; } 
         .log-info b { font-size: 0.95rem; color: #444; pointer-events: none; }
         .log-info span { font-size: 0.75rem; color: #666; opacity: 0.8; pointer-events: none; }
-        
         .log-actions { display: flex; gap: 12px; align-items: center; }
         .action-btn-wrap { position: relative; width: 36px; height: 36px; }
         .action-btn { border: none; background: rgba(255,255,255,0.5); border-radius: 10px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
-        
         .time-picker-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; -webkit-appearance: none; z-index: 5; }
-
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
         .modal-content { background: white; padding: 25px; border-radius: 30px; width: 80%; max-width: 340px; text-align: center; }
         .mode-tabs { display: flex; background: #f0f0f0; border-radius: 12px; padding: 4px; margin-bottom: 20px; }
@@ -53,9 +43,9 @@
     </style>
 </head>
 <body>
-
     <div class="avatar-container" onclick="document.getElementById('fileInput').click()">
-        <img id="baby-avatar" class="avatar-img" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjU0IiByPSI0MCIgZmlsbD0iI0ZGRkZGRiIvPjxjaXJjbGUgY3g9IjI4IiBjeT0iMzAiIHI9IjgiIGZpbGw9IiNDRUNFQ0UiLz48Y2lyY2xlIGN4PSI3MiIgY3k9IjMwIiByPSI4IiBmaWxsPSIjQ0VDRUNFIi8+PHBhdGggZD0iTTUwLDE0QzMwLDE0LDE0LDMwLDE0LDUwczE2LDM2LDM2LDM2czM2LTE2LDM2LTM2UzcwLDE0LDUwLDE0eiBNNzguMyw2MC42Qzc1LjIsNzUuNyw2NC45LDg3LjUsNTAsODcuNVMyNC44LDc1LjcsMjEuNyw2MC42QzIwLjgsNTYuMywyNCw1Mi41LDI4LjQsNTIuNWg0My4yQzc2LDUyLjUsNzkuMiw1Ni4zLDc4LjMsNjAuNnoiIGZpbGw9IiM4QTVDRTAiLz48Y2lyY2xlIGN4PSIzNyIgY3k9IjM1IiByPSI0IiBmaWxsPSIjRkZGRkZGIi8+PHBhdGggZD0iTTMwLDMyYzAtNS41LDQuNS0xMCwxMC0xMHMxMCw0LjUsMTAsMTBzLTQuNSwxMC0xMCwxMFMzMCwzNy41LDMwLDMyeiIgZmlsbD0iIzQwMzIzMCIvPjxjaXJjbGUgY3g9IjQwIiBjeT0iNDgiIHI9IjEuNSIgZmlsbD0iI0ZGRkZGRiIvPjxjaXJjbGUgY3g9IjM3IiBjeT0iNTUiIHI9IjcuNSIgZmlsbD0iI0ZGOTk5OSIgb3BhY2l0eT0iMC4zIi8+PGNpcmNsZSBjeD0iMjgiIGN5PSIxMSIgcj0iNS41IiBmaWxsPSIjRkY5OTk5Ii8+PC9zdmc+">
+        <img id="baby-avatar" class="avatar-img" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjU0IiByPSI0MCIgZmlsbD0iI0ZGRkZGRiIvPjxjaXJjbGUgY3g9IjI4IiBjeT0iMzAiIHI9IjgiIGZpbGw9IiNDRUNFQ0UiLz48Y2lyY2xlIGN4PSI3MiIgY3k9IjMwIiByPSI4IiBmaWxsPSIjQ0VDRUNFIi8+PHBhdGggZD0iTTUwLDE0QzMwLDE0LDE0LDMwLDE0LDUwczE2LDM2LDM2LDM2czM2LTE2LDM2LTM2UzcwLDE0LDUwLDE0eiBNNzguMyw2MC42Qzc1LjIsNzUuNyw2NC45LDg3LjUsNTAsODcuNVMyNC44LDc1LjcsMjEuNyw2MC42QzIwLjgsNTYuMywyNCw1Mi41LDI4LjQsNTIuNWg0My4yQzc2LDUyLjUsNzkuMiw1Ni4zLD\
+44LjMsNjAuNnoiIGZpbGw9IiM4QTVDRTAiLz48Y2lyY2xlIGN4PSIzNyIgY3k9IjM1IiByPSI0IiBmaWxsPSIjRkZGRkZGIi8+PHBhdGggZD0iTTMwLDMyYzAtNS41LDQuNS0xMCwxMC0xMHMxMCw0LjUsMTAsMTBzLTQuNSwxMC0xMCwxMFMzMCwzNy41LDMwLDMyeiIgZmlsbD0iIzQwMzIzMCIvPjxjaXJjbGUgY3g9IjQwIiBjeT0iNDgiIHI9IjEuNSIgZmlsbD0iI0ZGRkZGRiIvPjxjaXJjbGUgY3g9IjM3IiBjeT0iNTUiIHI9IjcuNSIgZmlsbD0iI0ZGOTk5OSIgb3BhY2l0eT0iMC4zIi8+PGNpcmNsZSBjeD0iMjgiIGN5PSIxMSIgcj0iNS41IiBmaWxsPSIjRkY5OTk5Ii8+PC9zdmc+">
     </div>
     <input type="file" id="fileInput" hidden accept="image/*" onchange="handleAvatarUpload(event)">
 
@@ -71,8 +61,6 @@
         <button class="log-card poo" onclick="handleAction('排便')"><span>💩</span><label>排便</label></button>
         <button class="log-card med" onclick="handleAction('吃甜甜')"><span>🍬</span><label>吃甜甜</label></button>
     </div>
-
-    <div id="status-msg"></div>
 
     <div id="milk-modal" class="modal-overlay" onclick="if(event.target==this) closeMilkModal()">
         <div class="modal-content">
@@ -110,7 +98,7 @@
         let familyId = localStorage.getItem('baby_family_id');
         let milkMode = 'leftFirst';
         let currentEditId = null;
-        let isEditingTime = false; 
+        let isEditingTime = false;
 
         function setupFamilyId() {
             const input = prompt("请输入家庭暗号：", familyId || "");
@@ -172,7 +160,7 @@
         window.handleTimeUpdate = async (id, newVal) => {
             if(!newVal) { isEditingTime = false; return; }
             await window.updateRecord(id, newVal);
-            isEditingTime = false; 
+            isEditingTime = false;
         };
 
         window.onload = () => {
@@ -184,7 +172,6 @@
                 window.listenToLogs(familyId, (logs) => {
                     if (isEditingTime) return;
 
-                    // --- 核心逻辑：检测今日是否服用 D3 ---
                     const todayStr = new Date().toLocaleDateString();
                     const hasD3Today = logs.some(log => 
                         log.type === '💊 维生素 D3' && 
@@ -199,14 +186,12 @@
                     } else {
                         d3Alert.style.backgroundColor = '#fff3cd';
                         d3Alert.style.color = '#856404';
-                        d3Alert.innerHTML = `⚠️ 今日尚未服用 D3 <button onclick="window.saveRecord('💊 维生素 D3', familyId)" style="margin-left:10px; border:none; background:#ffcc00; border-radius:8px; padding:4px 10px; cursor:pointer; font-weight:bold; color:#444;">立刻打卡</button>`;
+                        d3Alert.innerHTML = `⚠️ 今日尚未服用 D3 <button onclick="window.saveRecord('💊 维生素 D3', '${familyId}')" style="margin-left:10px; border:none; background:#ffcc00; border-radius:8px; padding:4px 10px; cursor:pointer; font-weight:bold; color:#444;">立刻打卡</button>`;
                     }
 
                     let html = '';
                     logs.forEach(log => {
-                        // 判定记录背景色
                         let bgColor = log.type.includes('D3') ? 'var(--d3-color)' : (log.type.startsWith('吃奶') ? 'var(--milk-color)' : (log.type === '排便' ? 'var(--poo-color)' : 'var(--med-color)'));
-                        
                         html += `
                             <li class="log-item" style="background-color: ${bgColor};">
                                 <div class="log-info" onclick="if('${log.type}'.startsWith('吃奶')) { openMilkModal('${log.id}', '${log.type}'); }">
