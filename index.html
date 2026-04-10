@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>小乖乖成长日志</title>
     <style>
-        :root { --bg-color: #fcf9f2; --milk-color: #ffeadb; --poo-color: #e2f0d9; --med-color: #e1f5fe; --text-color: #555; }
+        :root { --bg-color: #fcf9f2; --milk-color: #ffeadb; --poo-color: #e2f0d9; --med-color: #e1f5fe; --d3-color: #fff9db; --text-color: #555; }
         body { font-family: 'PingFang SC', sans-serif; background-color: var(--bg-color); margin: 0; display: flex; flex-direction: column; align-items: center; padding-bottom: 40px; color: var(--text-color); overflow-x: hidden; }
         
         .avatar-container { position: relative; width: 100px; height: 100px; margin: 30px auto 10px; cursor: pointer; }
@@ -13,6 +13,9 @@
         header { text-align: center; margin-bottom: 15px; }
         header h1 { font-size: 1.5rem; margin: 5px 0; color: #444; }
         header p { font-size: 0.8rem; opacity: 0.6; margin: 0; text-decoration: underline; cursor: pointer; }
+
+        /* D3 提醒区样式 */
+        #d3-alert { width: 85%; max-width: 350px; margin-bottom: 15px; border-radius: 15px; padding: 12px; display: none; text-align: center; font-size: 0.9rem; font-weight: bold; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
 
         .btn-container { width: 85%; max-width: 350px; display: grid; gap: 12px; }
         .log-card { border: none; border-radius: 20px; padding: 18px; display: flex; align-items: center; justify-content: center; gap: 12px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.03); -webkit-tap-highlight-color: transparent; }
@@ -61,6 +64,8 @@
         <p id="family-display" onclick="setupFamilyId()">设置家庭暗号</p>
     </header>
 
+    <div id="d3-alert"></div>
+
     <div class="btn-container">
         <button class="log-card milk" onclick="handleAction('吃奶')"><span>🍼</span><label>吃奶</label></button>
         <button class="log-card poo" onclick="handleAction('排便')"><span>💩</span><label>排便</label></button>
@@ -105,7 +110,7 @@
         let familyId = localStorage.getItem('baby_family_id');
         let milkMode = 'leftFirst';
         let currentEditId = null;
-        let isEditingTime = false; // 核心：重绘锁定开关
+        let isEditingTime = false; 
 
         function setupFamilyId() {
             const input = prompt("请输入家庭暗号：", familyId || "");
@@ -164,28 +169,43 @@
             } else window.saveRecord(type, familyId);
         };
 
-        // 处理时间更新并解锁界面
         window.handleTimeUpdate = async (id, newVal) => {
-            if(!newVal) {
-                isEditingTime = false;
-                return;
-            }
+            if(!newVal) { isEditingTime = false; return; }
             await window.updateRecord(id, newVal);
-            isEditingTime = false; // 允许下次数据变动时刷新DOM
+            isEditingTime = false; 
         };
 
         window.onload = () => {
             if (!familyId) return setupFamilyId();
             const listEl = document.getElementById('log-list');
+            const d3Alert = document.getElementById('d3-alert');
 
             if (window.listenToLogs) {
                 window.listenToLogs(familyId, (logs) => {
-                    // 如果正在操作时间选择器，绝对禁止重绘列表
                     if (isEditingTime) return;
+
+                    // --- 核心逻辑：检测今日是否服用 D3 ---
+                    const todayStr = new Date().toLocaleDateString();
+                    const hasD3Today = logs.some(log => 
+                        log.type === '💊 维生素 D3' && 
+                        new Date(log.fullTime).toLocaleDateString() === todayStr
+                    );
+
+                    d3Alert.style.display = 'block';
+                    if (hasD3Today) {
+                        d3Alert.style.backgroundColor = '#e2f0d9';
+                        d3Alert.style.color = '#5b8a4a';
+                        d3Alert.innerText = '✅ 今日维生素 D3 已服用';
+                    } else {
+                        d3Alert.style.backgroundColor = '#fff3cd';
+                        d3Alert.style.color = '#856404';
+                        d3Alert.innerHTML = `⚠️ 今日尚未服用 D3 <button onclick="window.saveRecord('💊 维生素 D3', familyId)" style="margin-left:10px; border:none; background:#ffcc00; border-radius:8px; padding:4px 10px; cursor:pointer; font-weight:bold; color:#444;">立刻打卡</button>`;
+                    }
 
                     let html = '';
                     logs.forEach(log => {
-                        let bgColor = log.type.startsWith('吃奶') ? 'var(--milk-color)' : (log.type === '排便' ? 'var(--poo-color)' : 'var(--med-color)');
+                        // 判定记录背景色
+                        let bgColor = log.type.includes('D3') ? 'var(--d3-color)' : (log.type.startsWith('吃奶') ? 'var(--milk-color)' : (log.type === '排便' ? 'var(--poo-color)' : 'var(--med-color)'));
                         
                         html += `
                             <li class="log-item" style="background-color: ${bgColor};">
